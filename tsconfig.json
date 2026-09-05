@@ -1,0 +1,27 @@
+// Build config. `paths` points at the reactor's built `lib/` for the same
+// reason the reactor's own plugin packages do: the workspace root is not
+// linked into its members, so the bare name would resolve to the registry.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": "src",
+    "outDir": "lib",
+    "baseUrl": ".",
+    "paths": {
+      "@datalayer/reactor": ["../reactor/lib/index.d.ts"],
+      "@datalayer/reactor/react": ["../reactor/lib/react/index.d.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

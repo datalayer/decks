@@ -1,0 +1,1093 @@
+/*
+ * Copyright (c) 2022-2026 Datalayer, Inc.
+ *
+ * Datalayer License
+ */
+
+/*
+ * The look of every deck.
+ *
+ * Two rules govern this file, and everything in it follows from them.
+ *
+ * 1. NOTHING ESCAPES THE DECK. A deck is a view like any other — it renders
+ *    under the anonymous header, and under the authenticated header and
+ *    sidebar — so every selector below is a descendant of `.dla-deck-frame` or
+ *    `.dla-deck`, and no rule names a bare element, a Primer class or an
+ *    application class. Reveal's own stylesheet is likewise scoped; its single
+ *    global rule zeroes the body margin and padding, which `style/base.css`
+ *    already asserts with `!important`, so the two agree.
+ *
+ * 2. NOTHING NAMES A COLOUR. Every colour is a `--dla-deck-*` custom property
+ *    the template sets on the frame. The templates that follow the application
+ *    set them to Primer tokens, so a deck wears whichever of the eight
+ *    primer-addons themes the reader picked, in either colour mode; a template
+ *    with a palette of its own sets them to literal colours. The slide
+ *    components cannot tell the difference, which is the whole point.
+ *
+ * 3. NOTHING IS KEYED ON A CLASS REVEAL OWNS. `reveal-viewport` is added and
+ *    removed by Reveal as it initialises and destroys, and React re-mounts —
+ *    twice, under StrictMode. A rule that matched on it would style the deck
+ *    on the first mount and stop on the second, which is what a deck that has
+ *    collapsed to nothing looks like.
+ */
+
+/* --- The deck in the page ------------------------------------------------- */
+
+/*
+ * The frame: a 16:9 box in the page's flow, and nothing else.
+ *
+ * It holds no Reveal class and Reveal never touches it, which is the point.
+ * Reveal's `destroy()` removes `reveal-viewport` from whichever element it
+ * chose, so any rule keyed on a class Reveal owns stops matching the moment
+ * the deck re-initialises — which React does on every StrictMode mount. The
+ * frame carries the theme tokens; `.dla-deck` is Reveal's business.
+ */
+.dla-deck-frame {
+  /* Room taken by the application around the deck: header, page padding, the
+     deck's own toolbar. Overridden inline by the page, which measures. */
+  --dla-deck-chrome: 260px;
+
+  position: relative;
+  width: 100%;
+  /* 16:9, and never taller than what is left of the window — the max-width is
+     the height cap expressed as a width, which is what keeps the ratio. */
+  aspect-ratio: 16 / 9;
+  max-width: calc((100vh - var(--dla-deck-chrome)) * 16 / 9);
+  margin: 0 auto;
+}
+
+/*
+ * The deck fills the frame by being positioned to it.
+ *
+ * This element is Reveal's `.reveal`, and — since nothing above it claims the
+ * class — Reveal also makes it its viewport and measures it to scale the
+ * slides. Doubling the class beats `.reveal` and `.reveal-viewport`, which set
+ * their own size, colours and `position`, on specificity rather than on the
+ * order two stylesheets happened to be injected in.
+ */
+.dla-deck-frame > .dla-deck {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  overflow: hidden;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 12px;
+  background: var(--dla-deck-background);
+  color: var(--dla-deck-foreground);
+  color-scheme: var(--dla-deck-color-scheme);
+  font-family: var(--dla-deck-font);
+  --r-overlay-element-bg-color: var(--dla-deck-foreground);
+  --r-overlay-element-fg-color: var(--dla-deck-background);
+  --r-link-color: var(--dla-deck-accent);
+}
+
+/*
+ * Printing: the deck as pages, on a page that holds nothing else.
+ *
+ * Reveal's print view moves every slide into a `.pdf-page` of the slide's own
+ * size and breaks the page after each. The tokens are on this element rather
+ * than on a frame, and so are the colours; the background is here rather than
+ * on the pages because Reveal copies the *viewport's* computed background
+ * onto each page inline — and with the body as viewport that is transparent,
+ * which an inline style would then win with over any rule of ours.
+ */
+.dla-deck.dla-deck--print {
+  background: var(--dla-deck-background);
+  color: var(--dla-deck-foreground);
+  color-scheme: var(--dla-deck-color-scheme);
+  font-family: var(--dla-deck-font);
+  --r-link-color: var(--dla-deck-accent);
+}
+
+/*
+ * Backgrounds that survive the print dialog.
+ *
+ * A browser drops background colours when "Background graphics" is off, unless
+ * the element asks not to be optimised away. Reveal sets that on
+ * `html.reveal-print *`, which reaches everything *inside* the document but
+ * not the document element — and what a reader sees behind a deck is the page
+ * canvas, propagated up from `body`. So the root is named here too, painted
+ * from the same token (which `usePrintTokens` puts within its reach), and the
+ * standard property is set beside Reveal's prefixed one.
+ *
+ * `html.reveal-print` exists only while a deck is printing, on the print route
+ * and nowhere else, so this cannot reach another page.
+ */
+html.reveal-print,
+html.reveal-print body,
+html.reveal-print .pdf-page,
+html.reveal-print .dla-deck {
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+/* The shell's loading gradient has no business behind a printed deck; the
+   colour that replaces it is set from JavaScript, see `paintForPrint`. */
+html.reveal-print {
+  background-image: none;
+}
+
+/* The root is painted from JavaScript — see `DeckRenderer` — because the token
+   below resolves only inside Primer's themed container, which `<html>` is
+   above. Everything here sits inside it and can spend it. */
+html.reveal-print body,
+html.reveal-print .pdf-page,
+html.reveal-print .dla-deck {
+  background: var(--dla-deck-background);
+  color: var(--dla-deck-foreground);
+}
+
+/*
+ * Presenting: the same element, filling the screen.
+ *
+ * Reveal's own `:fullscreen` rule forces width and height with `!important`;
+ * what it cannot know about is the border and the corners this file put there.
+ */
+.dla-deck.dla-deck:fullscreen {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+/*
+ * An embedded deck does not hold the keyboard until it is clicked — Reveal
+ * blurs it on purpose, so that arrow keys still scroll the page around it, and
+ * marks the deck `focused` once it has been. Without something to see, a
+ * reader presses an arrow key, nothing happens, and the deck looks broken.
+ * Filling the screen makes it moot: nothing else is on the screen to steer.
+ */
+.dla-deck.focused {
+  box-shadow: inset 0 0 0 2px var(--dla-deck-accent);
+}
+
+.dla-deck.focused:fullscreen {
+  box-shadow: none;
+}
+
+/* Reveal hard-codes black controls and white progress; both are theirs to
+   assume and ours to correct. */
+.dla-deck .controls {
+  color: var(--dla-deck-accent);
+}
+
+.dla-deck .progress {
+  color: var(--dla-deck-accent);
+  background-color: var(--dla-deck-border);
+}
+
+.dla-deck .slide-number {
+  color: var(--dla-deck-muted);
+  background-color: transparent;
+  font-family: var(--dla-deck-font);
+}
+
+.dla-deck .slides section {
+  /* `center: false` plus a full-height section: every slide is a frame the
+     layouts fill themselves, which is what makes a footer sit at the bottom
+     of the slide rather than under the last paragraph. */
+  height: 100%;
+  padding: 0;
+  text-align: left;
+}
+
+.dla-deck h1,
+.dla-deck h2,
+.dla-deck h3,
+.dla-deck h4 {
+  font-family: var(--dla-deck-font);
+  color: var(--dla-deck-foreground);
+  font-weight: var(--dla-deck-heading-weight);
+  text-transform: none;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.dla-deck p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.dla-deck a {
+  color: var(--dla-deck-accent);
+  text-decoration: none;
+}
+
+.dla-deck a:hover {
+  text-decoration: underline;
+}
+
+.dla-deck strong {
+  color: var(--dla-deck-foreground);
+  font-weight: 650;
+}
+
+.dla-deck code {
+  font-family: var(--dla-deck-font-mono);
+  /* Monospace sets wider than the text face at the same size; a shade
+     smaller, inline code sits on the line instead of standing up out of it. */
+  font-size: 0.88em;
+}
+
+/* --- The frame every slide is built in ------------------------------------ */
+
+.dla-deck .dla-slide {
+  /* Positioned, so a backdrop has a box to fill. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 56px 72px 0;
+}
+
+/*
+ * The layer behind a slide's content. Inert, so a drawing with links or hover
+ * states of its own cannot take a click meant for the slide; and below
+ * everything else, which is stacked above it by the rule after this one.
+ */
+.dla-deck .dla-slide-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/*
+ * A wash over the backdrop, heaviest where the title is. The hero drawings
+ * were made to sit under a heading of their own and carry detail right up to
+ * their top edge; on a slide the heading is ours, and it has to read.
+ */
+.dla-deck .dla-slide-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--dla-deck-background) 90%, transparent) 0%,
+    color-mix(in srgb, var(--dla-deck-background) 70%, transparent) 40%,
+    color-mix(in srgb, var(--dla-deck-background) 35%, transparent) 100%
+  );
+}
+
+.dla-deck .dla-slide > :not(.dla-slide-backdrop) {
+  position: relative;
+  z-index: 1;
+}
+
+.dla-deck .dla-slide--centered .dla-slide-body {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.dla-deck .dla-slide--full-bleed {
+  padding: 0;
+}
+
+.dla-deck .dla-slide-head {
+  flex: 0 0 auto;
+  margin-bottom: 28px;
+}
+
+.dla-deck .dla-slide-head:empty {
+  display: none;
+  margin: 0;
+}
+
+.dla-deck .dla-slide-title {
+  font-size: var(--dla-deck-heading-size);
+}
+
+.dla-deck .dla-slide-subtitle {
+  margin-top: 10px;
+  font-size: 26px;
+  color: var(--dla-deck-muted);
+  line-height: 1.35;
+}
+
+.dla-deck .dla-slide-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 24px;
+  font-size: var(--dla-deck-body-size);
+}
+
+/* --- Footer --------------------------------------------------------------- */
+
+.dla-deck .dla-slide-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  height: 68px;
+  padding-bottom: 16px;
+  font-size: 15px;
+  color: var(--dla-deck-muted);
+}
+
+/* A full-bleed slide has no padding of its own, so the footer brings some. */
+.dla-deck .dla-slide--full-bleed .dla-slide-footer {
+  padding: 0 72px 16px;
+}
+
+.dla-deck .dla-slide-footer-logo {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  /* The logo stretches to its box, and this is the box. */
+  width: 190px;
+  opacity: 0.95;
+}
+
+.dla-deck .dla-slide-footer-logo:hover {
+  opacity: 1;
+  text-decoration: none;
+}
+
+.dla-deck .dla-slide-footer-note {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.dla-deck .dla-slide-footer-legal {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  /* Reveal's next-arrow sits in the bottom-right corner, on this very row;
+     this is the room it takes, so the slide number never runs into it. */
+  padding-right: 52px;
+}
+
+.dla-deck .dla-slide-footer-number {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+/* --- Title and section ----------------------------------------------------- */
+
+.dla-deck .dla-slide-hero {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* A title's visual: under the words, left-aligned with them, no wider than
+   it needs to be. */
+.dla-deck .dla-slide-hero-visual {
+  display: flex;
+  align-self: flex-start;
+  margin-top: 16px;
+}
+
+.dla-deck .dla-slide-hero-title {
+  font-size: var(--dla-deck-title-size);
+}
+
+.dla-deck .dla-slide-hero-subtitle {
+  font-size: 30px;
+  color: var(--dla-deck-muted);
+  line-height: 1.35;
+  max-width: 26em;
+}
+
+.dla-deck .dla-slide-hero-meta {
+  margin-top: 8px;
+  font-size: 19px;
+  color: var(--dla-deck-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dla-deck .dla-slide-hero-rule {
+  width: 128px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-slide-eyebrow {
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dla-deck-accent);
+  font-weight: 600;
+}
+
+/* --- Statement and quote ---------------------------------------------------- */
+
+.dla-deck .dla-statement {
+  font-size: 46px;
+  line-height: 1.25;
+  font-weight: var(--dla-deck-heading-weight);
+  letter-spacing: -0.02em;
+  max-width: 22em;
+}
+
+.dla-deck .dla-statement-attribution {
+  margin-top: 22px;
+  font-size: 20px;
+  color: var(--dla-deck-muted);
+}
+
+.dla-deck .dla-quote {
+  font-size: 38px;
+  line-height: 1.3;
+  font-weight: 500;
+  max-width: 24em;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-style: normal;
+}
+
+.dla-deck .dla-quote::before {
+  content: '\201C';
+  color: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-quote::after {
+  content: '\201D';
+  color: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-quote-author {
+  margin-top: 26px;
+  font-size: 21px;
+  font-weight: 600;
+}
+
+.dla-deck .dla-quote-role {
+  font-size: 19px;
+  color: var(--dla-deck-muted);
+}
+
+/* --- Bullets ---------------------------------------------------------------- */
+
+.dla-deck .dla-bullets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dla-deck .dla-bullets--plain {
+  gap: 10px;
+}
+
+.dla-deck .dla-bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  line-height: 1.4;
+}
+
+.dla-deck .dla-bullet-mark {
+  flex: 0 0 auto;
+  color: var(--dla-deck-accent);
+  font-weight: 700;
+  line-height: 1.4;
+  /* A fixed box, so the text of every bullet starts on the same column. */
+  width: 1.1em;
+}
+
+.dla-deck .dla-bullet-mark--dot {
+  font-size: 0.7em;
+  line-height: 2;
+}
+
+/* --- Columns ---------------------------------------------------------------- */
+
+.dla-deck .dla-columns {
+  display: grid;
+  gap: 40px;
+  align-items: start;
+  height: 100%;
+  min-height: 0;
+}
+
+.dla-deck .dla-columns--1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dla-deck .dla-columns--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dla-deck .dla-columns--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.dla-deck .dla-columns--wide-left {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+.dla-deck .dla-columns--wide-right {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.dla-deck .dla-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dla-deck .dla-column-heading {
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--dla-deck-accent);
+}
+
+/* --- Metrics ----------------------------------------------------------------- */
+
+.dla-deck .dla-metrics {
+  display: grid;
+  grid-template-columns: repeat(var(--dla-metrics-columns, 3), minmax(0, 1fr));
+  gap: 28px;
+  width: 100%;
+}
+
+.dla-deck .dla-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 26px;
+  border-radius: 14px;
+  background: var(--dla-deck-surface);
+  border: 1px solid var(--dla-deck-border);
+  min-width: 0;
+}
+
+.dla-deck .dla-metric-value {
+  font-size: 56px;
+  font-weight: var(--dla-deck-heading-weight);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-metric-label {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.dla-deck .dla-metric-detail {
+  font-size: 16px;
+  color: var(--dla-deck-muted);
+  line-height: 1.35;
+}
+
+/* --- Images ------------------------------------------------------------------- */
+
+.dla-deck .dla-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.dla-deck .dla-figure img {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  object-fit: contain;
+  border-radius: 12px;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  background: none;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.dla-deck .dla-figure--cover img {
+  object-fit: cover;
+}
+
+.dla-deck .dla-figure--screenshot img {
+  border: 1px solid var(--dla-deck-border);
+  box-shadow: 0 18px 48px var(--dla-deck-shadow);
+  background: var(--dla-deck-surface);
+}
+
+.dla-deck .dla-figure--full-bleed img {
+  border-radius: 0;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dla-deck .dla-figure figcaption {
+  flex: 0 0 auto;
+  font-size: 17px;
+  color: var(--dla-deck-muted);
+}
+
+/* --- Comparison ---------------------------------------------------------------- */
+
+.dla-deck .dla-comparison {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 21px;
+  margin: 0;
+  box-shadow: none;
+}
+
+.dla-deck .dla-comparison th,
+.dla-deck .dla-comparison td {
+  padding: 16px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--dla-deck-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.dla-deck .dla-comparison thead th {
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dla-deck-muted);
+  font-weight: 600;
+}
+
+.dla-deck .dla-comparison tbody tr:last-child th,
+.dla-deck .dla-comparison tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.dla-deck .dla-comparison tbody th {
+  font-weight: 600;
+  color: var(--dla-deck-foreground);
+}
+
+.dla-deck .dla-comparison-highlight {
+  background: var(--dla-deck-accent-soft);
+}
+
+.dla-deck .dla-comparison thead .dla-comparison-highlight {
+  color: var(--dla-deck-accent);
+  border-radius: 10px 10px 0 0;
+}
+
+.dla-deck .dla-comparison-yes {
+  color: var(--dla-deck-accent);
+  font-weight: 700;
+}
+
+.dla-deck .dla-comparison-no {
+  color: var(--dla-deck-muted);
+}
+
+/* --- Timeline -------------------------------------------------------------------- */
+
+.dla-deck .dla-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.dla-deck .dla-timeline-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 26px;
+  position: relative;
+  min-width: 0;
+}
+
+/* The rail, drawn once per item so it reaches across the row. */
+.dla-deck .dla-timeline-item::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: -24px;
+  height: 2px;
+  background: var(--dla-deck-border);
+}
+
+.dla-deck .dla-timeline-item:last-child::before {
+  right: 0;
+}
+
+.dla-deck .dla-timeline-item::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--dla-deck-background);
+  border: 3px solid var(--dla-deck-border);
+  box-sizing: border-box;
+}
+
+.dla-deck .dla-timeline-item--current::after {
+  border-color: var(--dla-deck-accent);
+  background: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-timeline-when {
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dla-deck-accent);
+  font-weight: 600;
+}
+
+.dla-deck .dla-timeline-title {
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.dla-deck .dla-timeline-detail {
+  font-size: 17px;
+  color: var(--dla-deck-muted);
+  line-height: 1.4;
+}
+
+/* --- Chart ------------------------------------------------------------------------ */
+
+.dla-deck .dla-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.dla-deck .dla-chart-row {
+  display: grid;
+  grid-template-columns: minmax(0, 12em) minmax(0, 1fr);
+  align-items: center;
+  gap: 20px;
+}
+
+.dla-deck .dla-chart-label {
+  font-size: 20px;
+  text-align: right;
+  color: var(--dla-deck-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dla-deck .dla-chart-track {
+  height: 44px;
+  border-radius: 8px;
+  background: var(--dla-deck-surface);
+  border: 1px solid var(--dla-deck-border);
+  overflow: hidden;
+}
+
+.dla-deck .dla-chart-bar {
+  height: 100%;
+  border-radius: 7px;
+  background: var(--dla-chart-bar-color, var(--dla-deck-accent));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 14px;
+  box-sizing: border-box;
+  color: var(--dla-deck-accent-contrast);
+  font-size: 19px;
+  font-weight: 650;
+  min-width: 3.5em;
+}
+
+.dla-deck .dla-chart-caption {
+  font-size: 17px;
+  color: var(--dla-deck-muted);
+}
+
+/* --- Logos -------------------------------------------------------------------------- */
+
+.dla-deck .dla-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dla-deck .dla-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 18px 30px;
+  border-radius: 14px;
+  border: 1px solid var(--dla-deck-border);
+  background: var(--dla-deck-surface);
+  font-size: 24px;
+  font-weight: 650;
+  color: var(--dla-deck-foreground);
+}
+
+.dla-deck a.dla-logo:hover {
+  border-color: var(--dla-deck-accent);
+  text-decoration: none;
+}
+
+.dla-deck .dla-logo img {
+  max-height: 60px;
+  max-width: 220px;
+  width: auto;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  background: none;
+}
+
+/* --- Illustrations ------------------------------------------------------------------- */
+
+/*
+ * A design-system drawing on a slide. The drawings paint their own
+ * background rectangle, so the frame's job is the corners and the edge — the
+ * same ones a figure gets — and keeping the picture within its column.
+ */
+.dla-deck .dla-illustration {
+  width: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--dla-deck-border);
+  line-height: 0;
+}
+
+.dla-deck .dla-illustration svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Two parties' marks, side by side, with a cross between them. */
+.dla-deck .dla-partnership {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 18px 26px;
+  border-radius: 14px;
+  background: var(--dla-deck-surface);
+  border: 1px solid var(--dla-deck-border);
+}
+
+.dla-deck .dla-partnership svg {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.dla-deck .dla-partnership-cross {
+  font-size: 36px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--dla-deck-muted);
+}
+
+/* Blocks one above the other, as a column with more than one thing in it. */
+.dla-deck .dla-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/*
+ * A quote from the testimonials page, drawn by that page's component.
+ *
+ * The card sets its type on Primer's scale, sized for a web page; on a slide
+ * it is the whole point of the column, so it is set a step up. `font-size`
+ * on the wrapper does that for everything inside that is in `em`s, and the
+ * card's avatar and rule keep their own sizes.
+ */
+.dla-deck .dla-testimonial {
+  width: 100%;
+}
+
+.dla-deck .dla-testimonial blockquote {
+  font-size: 23px !important;
+  line-height: 1.55 !important;
+}
+
+/* A partner's mark, set in a panel so it reads as a logo and not as an icon. */
+.dla-deck .dla-logo-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px;
+  border-radius: 14px;
+  background: var(--dla-deck-surface);
+  border: 1px solid var(--dla-deck-border);
+}
+
+.dla-deck .dla-logo-mark svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* --- Code ---------------------------------------------------------------------------- */
+
+.dla-deck .dla-code {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.dla-deck .dla-code pre {
+  width: 100%;
+  margin: 0;
+  box-shadow: none;
+  font-size: 19px;
+  border-radius: 12px;
+  border: 1px solid var(--dla-deck-border);
+  background: var(--dla-deck-code-background);
+  overflow: hidden;
+}
+
+.dla-deck .dla-code pre code {
+  /* Block, not inline: an inline box pays its horizontal padding only at its
+     two ends, so the first line of the snippet was indented by the padding
+     and the rest were not. */
+  display: block;
+  padding: 22px 24px;
+  max-height: none;
+  font-family: var(--dla-deck-font-mono);
+  font-size: 1em;
+  line-height: 1.5;
+  background: none;
+}
+
+.dla-deck .dla-code-caption {
+  font-size: 17px;
+  color: var(--dla-deck-muted);
+}
+
+/*
+ * Syntax highlighting, in the deck's own colours.
+ *
+ * Reveal's highlight plugin adds highlight.js classes; the stylesheet that
+ * usually colours them is a fixed palette (monokai and friends) that would
+ * suit one template and fight the rest, and would apply to every `.hljs` on
+ * the page rather than to the deck. These five rules are the whole of it.
+ */
+.dla-deck .hljs-keyword,
+.dla-deck .hljs-selector-tag,
+.dla-deck .hljs-literal,
+.dla-deck .hljs-doctag,
+.dla-deck .hljs-meta {
+  color: var(--dla-deck-code-keyword);
+}
+
+.dla-deck .hljs-string,
+.dla-deck .hljs-regexp,
+.dla-deck .hljs-addition,
+.dla-deck .hljs-attribute {
+  color: var(--dla-deck-code-string);
+}
+
+.dla-deck .hljs-comment,
+.dla-deck .hljs-quote,
+.dla-deck .hljs-deletion {
+  color: var(--dla-deck-code-comment);
+  font-style: italic;
+}
+
+.dla-deck .hljs-number,
+.dla-deck .hljs-symbol,
+.dla-deck .hljs-bullet,
+.dla-deck .hljs-variable,
+.dla-deck .hljs-template-variable {
+  color: var(--dla-deck-code-number);
+}
+
+.dla-deck .hljs-title,
+.dla-deck .hljs-name,
+.dla-deck .hljs-section,
+.dla-deck .hljs-built_in,
+.dla-deck .hljs-type,
+.dla-deck .hljs-class {
+  color: var(--dla-deck-code-name);
+}
+
+.dla-deck .hljs-emphasis {
+  font-style: italic;
+}
+
+.dla-deck .hljs-strong {
+  font-weight: 700;
+}
+
+/* Reveal's own line-stepping marks, which the plugin adds for `lineNumbers`. */
+.dla-deck .hljs .highlight-line {
+  background: var(--dla-deck-accent-soft);
+}
+
+.dla-deck .hljs .hljs-ln-numbers {
+  color: var(--dla-deck-muted);
+  opacity: 0.6;
+}
+
+/* --- Diagnostics ----------------------------------------------------------------------- */
+
+/*
+ * What a spec that does not add up looks like. Shown rather than thrown: a
+ * deck with one bad slide is still a deck, and whoever is fixing it — usually
+ * minutes before presenting it — wants to see which slide and why.
+ */
+.dla-deck .dla-slide-error,
+.dla-deck-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 2px dashed var(--dla-deck-danger);
+  color: var(--dla-deck-danger);
+  font-family: var(--dla-deck-font-mono);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.dla-deck-issues {
+  font-size: 13px;
+  margin: 0 auto 12px;
+  max-width: 1280px;
+}
+
+.dla-deck-issues ul {
+  margin: 0;
+  padding-left: 18px;
+}

@@ -1,0 +1,77 @@
+{
+  "name": "@datalayer/decks",
+  "version": "1.0.0",
+  "description": "Presentations described as data: a spec-driven Reveal.js deck engine, and the Reactor plugin that lists, opens and creates decks in any Reactor shell.",
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./plugin": {
+      "types": "./lib/plugin/index.d.ts",
+      "import": "./lib/plugin/index.js"
+    },
+    "./theme": {
+      "types": "./lib/deckThemeOverride.d.ts",
+      "default": "./lib/deckThemeOverride.js"
+    },
+    "./style/decks.css": "./style/decks.css"
+  },
+  "files": [
+    "lib",
+    "style"
+  ],
+  "keywords": [
+    "datalayer",
+    "reactor",
+    "decks",
+    "slides",
+    "reveal.js",
+    "presentations"
+  ],
+  "scripts": {
+    "clean": "rm -rf lib",
+    "prebuild": "node scripts/css-to-ts.mjs",
+    "build": "tsc -p tsconfig.json",
+    "build:lib": "tsc -p tsconfig.json",
+    "typecheck": "node scripts/css-to-ts.mjs && tsc -p tsconfig.typecheck.json",
+    "test": "vitest run",
+    "app:dev": "npm run dev --prefix app",
+    "app:build": "npm run build --prefix app",
+    "watch:lib": "tsc -w -p tsconfig.json"
+  },
+  "dependencies": {
+    "@revealjs/react": "^0.2.1",
+    "reveal.js": "^6.0.1"
+  },
+  "peerDependencies": {
+    "@datalayer/primer-addons": "^1.0.20",
+    "@datalayer/reactor": "^1.0.0",
+    "@primer/octicons-react": ">=19",
+    "@primer/react": "^37.31.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  },
+  "typesVersions": {
+    "*": {
+      "plugin": [
+        "lib/plugin/index.d.ts"
+      ],
+      "theme": [
+        "lib/deckThemeOverride.d.ts"
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+lib/
+dist/
+style/
+src/decksCss.ts
+app/dist/
+share/datalayer/reactor/apps/decks/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+build/

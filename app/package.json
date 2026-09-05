@@ -1,0 +1,33 @@
+{
+  "name": "@datalayer/decks-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The Datalayer Decks interface: a Reactor shell with the decks plugin, built into the wheel",
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@datalayer/decks": "file:..",
+    "@datalayer/primer-addons": "^1.0.20",
+    "@datalayer/reactor": "file:../../reactor",
+    "@datalayer/reactor-commands": "file:../../reactor/plugins/commands",
+    "@datalayer/reactor-manager": "file:../../reactor/plugins/manager",
+    "@datalayer/reactor-shell": "file:../../reactor/plugins/shell",
+    "@primer/octicons-react": "^19.15.0",
+    "@primer/react": "^37.31.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "styled-components": "^5.3.10"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^2.2.1",
+    "@rsbuild/plugin-react": "^1.4.6",
+    "@rsbuild/plugin-styled-components": "^1.7.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "typescript": "5.9.3"
+  }
+}

@@ -1,0 +1,44 @@
+# Copyright (c) 2022-2026 Datalayer, Inc.
+#
+# Datalayer License
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "datalayer_decks"
+version = "1.0.0"
+description = "Datalayer Decks: presentations described as data, served with their Reactor interface by one command"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "datalayer_reactor",
+  "fastapi>=0.115.0",
+  "pydantic>=2.8.0",
+  "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "httpx>=0.27"]
+
+# The command: serve the API and the built interface from one origin.
+[project.scripts]
+datalayer-decks = "datalayer_decks:main"
+
+# Installing this distribution beside any Reactor host publishes the decks
+# extension: its routes join that host, and its frontend appears in that
+# host's shell. The same code `datalayer-decks` serves on its own.
+[project.entry-points."datalayer.reactor.extensions"]
+decks = "datalayer_decks.extension:extension"
+
+[tool.hatch.build.targets.wheel]
+packages = ["datalayer_decks"]
+
+# The built interface travels in the wheel under the `share/` convention the
+# reactor's `find_ui` reads. `app/` builds into this directory.
+[tool.hatch.build.targets.wheel.shared-data]
+"share/datalayer/reactor/apps/decks" = "share/datalayer/reactor/apps/decks"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

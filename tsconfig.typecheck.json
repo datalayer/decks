@@ -1,0 +1,15 @@
+// Typecheck against the reactor's *source*, so a fresh checkout and a changed
+// core are both checked honestly — see the reactor's plugins for the reasoning.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "paths": {
+      "@datalayer/reactor": ["../reactor/src/index.ts"],
+      "@datalayer/reactor/react": ["../reactor/src/react/index.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": []
+}
