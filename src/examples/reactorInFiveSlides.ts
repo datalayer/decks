@@ -12,7 +12,7 @@
  * types and the editor completes the fields.
  */
 
-import type { DeckSpec } from '@datalayer/decks';
+import type { DeckSpec } from '../types';
 
 export const reactorInFiveSlides: DeckSpec = {
   deck: {
@@ -47,7 +47,8 @@ export const reactorInFiveSlides: DeckSpec = {
       left: {
         type: 'text',
         heading: 'TypeScript',
-        content: '`@datalayer/reactor` runs in the browser: slots, commands, keybindings, lazy and remote plugins.',
+        content:
+          '`@datalayer/reactor` runs in the browser: slots, commands, keybindings, lazy and remote plugins.',
       },
       right: {
         type: 'bullets',

@@ -19,6 +19,10 @@
       "types": "./lib/deckThemeOverride.d.ts",
       "default": "./lib/deckThemeOverride.js"
     },
+    "./examples": {
+      "types": "./lib/examples/index.d.ts",
+      "import": "./lib/examples/index.js"
+    },
     "./style/decks.css": "./style/decks.css"
   },
   "files": [
@@ -35,14 +39,17 @@
   ],
   "scripts": {
     "clean": "rm -rf lib",
-    "prebuild": "node scripts/css-to-ts.mjs",
+    "prebuild": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs",
     "build": "tsc -p tsconfig.json",
     "build:lib": "tsc -p tsconfig.json",
-    "typecheck": "node scripts/css-to-ts.mjs && tsc -p tsconfig.typecheck.json",
+    "typecheck": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs && tsc -p tsconfig.typecheck.json",
     "test": "vitest run",
     "app:dev": "npm run dev --prefix app",
     "app:build": "npm run build --prefix app",
-    "watch:lib": "tsc -w -p tsconfig.json"
+    "watch:lib": "tsc -w -p tsconfig.json",
+    "extension:build": "rsbuild build -c extension/rsbuild.config.ts",
+    "extension:dev": "rsbuild dev -c extension/rsbuild.config.ts",
+    "build:all": "npm run build && npm run app:build && npm run extension:build"
   },
   "dependencies": {
     "@revealjs/react": "^0.2.1",
@@ -57,12 +64,16 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@module-federation/rsbuild-plugin": "^0.20.0",
+    "@rsbuild/core": "^2.2.1",
+    "@rsbuild/plugin-react": "^1.4.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "jsdom": "^26.0.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "typescript": "5.9.3",
-    "vitest": "4.1.11"
+    "vitest": "^3.2.4"
   },
   "typesVersions": {
     "*": {
@@ -71,6 +82,9 @@
       ],
       "theme": [
         "lib/deckThemeOverride.d.ts"
+      ],
+      "examples": [
+        "lib/examples/index.d.ts"
       ]
     }
   }

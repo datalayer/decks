@@ -3,6 +3,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "resolveJsonModule": true,
     "noEmit": true,
     "rootDir": "..",
     "paths": {

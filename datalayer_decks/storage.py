@@ -72,7 +72,11 @@ class DeckStore:
     """The directory of decks."""
 
     def __init__(self, directory: Path | str | None = None) -> None:
-        self.directory = Path(directory).expanduser() if directory else DEFAULT_DECKS_DIR
+        # The environment is the store's business, not each caller's: the
+        # extension constructs a store with no arguments when a host discovers
+        # it, and it must land in the same directory `--decks-dir` chose.
+        chosen = directory or os.environ.get("DATALAYER_DECKS_DIR")
+        self.directory = Path(chosen).expanduser() if chosen else DEFAULT_DECKS_DIR
 
     def _path(self, identifier: str) -> Path:
         collection, slug = split_id(identifier)

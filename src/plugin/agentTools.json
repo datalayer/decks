@@ -1,0 +1,242 @@
+{
+  "id": "decks",
+  "version": "1.0.0",
+  "name": "Decks",
+  "description": "Read and write decks, and drive the decks plugin on the person's screen: open a deck, move through it, present it, print it.",
+  "plugin": "@datalayer/decks",
+  "commands": [
+    {
+      "name": "decks_list_decks",
+      "command": "decks.listDecks",
+      "description": "Every deck: id, collection, slug, title, subtitle and slide count. Use the id with the other deck tools."
+    },
+    {
+      "name": "decks_get_deck",
+      "command": "decks.getDeck",
+      "description": "One deck: its full spec and an outline (slide number, type, title) to find a slide before opening or changing it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "name": "decks_create_deck",
+      "command": "decks.createDeck",
+      "description": "Create a deck from a complete spec under a short slug, optionally in a collection. The result names its id; the deck opens beside the conversation.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-safe name; becomes the address."
+          },
+          "spec": {
+            "type": "object",
+            "description": "The deck specification: `{deck: {title, subtitle?, template?}, slides: [...]}`."
+          },
+          "collection": {
+            "type": "string",
+            "description": "Optional family the deck belongs to."
+          }
+        },
+        "required": [
+          "slug",
+          "spec"
+        ]
+      }
+    },
+    {
+      "name": "decks_update_deck",
+      "command": "decks.updateDeck",
+      "description": "Replace a deck's whole record — collection, slug and spec — by id. The same slug keeps the address.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          },
+          "slug": {
+            "type": "string"
+          },
+          "spec": {
+            "type": "object",
+            "description": "The deck specification: `{deck: {title, subtitle?, template?}, slides: [...]}`."
+          },
+          "collection": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "spec"
+        ]
+      }
+    },
+    {
+      "name": "decks_update_slide",
+      "command": "decks.updateSlide",
+      "description": "Replace one slide of a deck by its 1-based number, leaving the rest as they are.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          },
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide number, from the deck's outline."
+          },
+          "slide_spec": {
+            "type": "object",
+            "description": "A whole slide: `{type, ...}`."
+          }
+        },
+        "required": [
+          "id",
+          "slide",
+          "slide_spec"
+        ]
+      }
+    },
+    {
+      "name": "decks_insert_slide",
+      "command": "decks.insertSlide",
+      "description": "Insert a slide before the given 1-based position (past the end appends).",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          },
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide number, from the deck's outline."
+          },
+          "slide_spec": {
+            "type": "object",
+            "description": "A whole slide: `{type, ...}`."
+          }
+        },
+        "required": [
+          "id",
+          "slide",
+          "slide_spec"
+        ]
+      }
+    },
+    {
+      "name": "decks_delete_slide",
+      "command": "decks.deleteSlide",
+      "description": "Remove one slide of a deck by its 1-based number.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          },
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide number, from the deck's outline."
+          }
+        },
+        "required": [
+          "id",
+          "slide"
+        ]
+      }
+    },
+    {
+      "name": "decks_delete_deck",
+      "command": "decks.deleteDeck",
+      "description": "Delete a deck by id. Irreversible; ask first.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "name": "decks_list",
+      "command": "decks.list",
+      "description": "Close the open deck and show the list of decks."
+    },
+    {
+      "name": "decks_open",
+      "command": "decks.open",
+      "description": "Open a deck by its id, optionally at a slide.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks."
+          },
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide to open at. The first when omitted."
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "name": "decks_go_to_slide",
+      "command": "decks.goToSlide",
+      "description": "Move the open deck to a slide.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide number, from the deck's outline."
+          }
+        },
+        "required": [
+          "slide"
+        ]
+      }
+    },
+    {
+      "name": "decks_next_slide",
+      "command": "decks.nextSlide",
+      "description": "Advance the open deck by one slide."
+    },
+    {
+      "name": "decks_previous_slide",
+      "command": "decks.previousSlide",
+      "description": "Go back one slide in the open deck."
+    },
+    {
+      "name": "decks_present",
+      "command": "decks.present",
+      "description": "Put the open deck in fullscreen. Browsers only allow this from a person's click, so the result may say it was blocked — then ask them to press F or the Present button."
+    },
+    {
+      "name": "decks_print",
+      "command": "decks.print",
+      "description": "Open the print view of the open deck in a new tab, for Save as PDF. The result carries the address in case the browser blocked the new tab."
+    }
+  ]
+}

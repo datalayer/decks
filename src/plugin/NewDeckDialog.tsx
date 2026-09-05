@@ -15,8 +15,7 @@
 
 import type { JSX } from 'react';
 import { useState } from 'react';
-import { Dialog, FormControl, Select, TextInput } from '@primer/react';
-import { Box } from '@datalayer/primer-addons';
+import { Box, Dialog, FormControl, Select, TextInput } from '@primer/react';
 import { deckTemplates } from '../templates';
 import { cancelNewDeck, createDeck, useDecksState } from './store';
 
@@ -52,7 +51,12 @@ export const NewDeckDialog = (): JSX.Element | null => {
       onClose={cancelNewDeck}
       footerButtons={[
         { buttonType: 'default', content: 'Cancel', onClick: cancelNewDeck },
-        { buttonType: 'primary', content: 'Create', onClick: submit, disabled: !title.trim() },
+        {
+          buttonType: 'primary',
+          content: 'Create',
+          onClick: submit,
+          disabled: !title.trim(),
+        },
       ]}
     >
       <Box

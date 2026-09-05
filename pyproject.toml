@@ -16,15 +16,21 @@ dependencies = [
   "datalayer_reactor",
   "fastapi>=0.115.0",
   "pydantic>=2.8.0",
+  "typer>=0.12",
   "uvicorn>=0.30.0",
 ]
 
 [project.optional-dependencies]
 test = ["pytest>=8", "httpx>=0.27"]
 
-# The command: serve the API and the built interface from one origin.
+# The command: the `decks` group on its own — `datalayer-decks serve`.
 [project.scripts]
-datalayer-decks = "datalayer_decks:main"
+datalayer-decks = "datalayer_decks.cli:main"
+
+# The same group inside the Datalayer CLI: `datalayer decks serve`. The
+# `datalayer` command hosts this entry-point group through the reactor.
+[project.entry-points."datalayer.cli"]
+decks = "datalayer_decks.cli:plugin"
 
 # Installing this distribution beside any Reactor host publishes the decks
 # extension: its routes join that host, and its frontend appears in that
@@ -35,10 +41,38 @@ decks = "datalayer_decks.extension:extension"
 [tool.hatch.build.targets.wheel]
 packages = ["datalayer_decks"]
 
-# The built interface travels in the wheel under the `share/` convention the
-# reactor's `find_ui` reads. `app/` builds into this directory.
+# The JavaScript halves are built into share/ when the wheel is built and
+# they are missing; see hatch_build.py.
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+# Both built halves travel in the wheel under the `share/` convention the
+# reactor reads: `find_ui` for the interface `app/` builds, and
+# `find_extension_frontend` for the Module Federation container
+# `extension/` builds — what lets any Reactor host load the decks plugin.
 [tool.hatch.build.targets.wheel.shared-data]
 "share/datalayer/reactor/apps/decks" = "share/datalayer/reactor/apps/decks"
+"share/datalayer/reactor/extensions/decks" = "share/datalayer/reactor/extensions/decks"
+
+# The sdist carries what the hook needs to build from source.
+[tool.hatch.build.targets.sdist]
+include = [
+  "datalayer_decks",
+  "tests",
+  "src",
+  "app",
+  "extension",
+  "examples",
+  "scripts",
+  "share",
+  "style",
+  "package.json",
+  "tsconfig.json",
+  "hatch_build.py",
+  "README.md",
+  "LICENSE",
+]
+exclude = ["app/node_modules", "extension/node_modules", "**/dist"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

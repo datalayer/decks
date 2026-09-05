@@ -13,6 +13,8 @@ Decks view, list and commands without importing the package.
 
 from __future__ import annotations
 
+import json
+from importlib import resources
 from pathlib import Path
 
 from reactor import (
@@ -26,6 +28,14 @@ from reactor import (
 
 from .api import build_decks_router
 from .storage import DeckStore
+
+#: What an agent may do with the decks plugin — every command it registers,
+#: data and screen alike — as the ``AgentTools`` bundle the TypeScript half
+#: contributes to the reactor. The same file: the package's build copies
+#: ``src/plugin/agentTools.json`` here, so the two halves cannot drift.
+DECKS_AGENT_TOOLS: dict = json.loads(
+    resources.files(__package__).joinpath("agent_tools.json").read_text(encoding="utf-8")
+)
 
 DECKS_PLUGIN_MANIFEST = PluginManifest(
     name="decks",
@@ -43,6 +53,15 @@ class DecksPlugin:
 
     def provide_routes(self) -> list[dict]:
         return [{"path": "/decks", "method": "GET", "summary": "List decks."}]
+
+    def provide_agent_tools(self) -> list[dict]:
+        """What an agent may do with the decks plugin — reading and writing
+        decks as much as opening and presenting one — as the bundle the
+        TypeScript plugin contributes to the reactor's ``AgentTools`` point,
+        so a server-side agent runtime reads it from ``GET /plugins/agent-tools``.
+        No agent specification names a deck tool: they all arrive from here.
+        """
+        return [DECKS_AGENT_TOOLS]
 
     def router(self):  # noqa: ANN201 — FastAPI's APIRouter, kept out of the import chain
         return build_decks_router(self.store)

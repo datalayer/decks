@@ -41,13 +41,25 @@ export type DecksState = {
   slide: number;
   /** Whether the "new deck" dialog is on screen. */
   creating: boolean;
+  /** The deck the rename dialog is open for, by id. */
+  renaming?: string;
+  /** The deck the delete confirmation is open for, by id. */
+  deleting?: string;
   /** Where decks are saved and loaded, when the plugin was given one. */
   backendUrl?: string;
   /** The last thing the backend said that went wrong, for the list to show. */
   error?: string;
+  /**
+   * Bumped whenever someone asks to *see* decks — a deck opened, the list
+   * shown — even when nothing else changed. A host with its own notion of
+   * what is on screen (a Loop with the deck as one editor among several)
+   * follows this to bring the decks into view; a "show the decks" command
+   * that only cleared a selection already clear had nothing for it to follow.
+   */
+  revealed: number;
 };
 
-let state: DecksState = { slide: 1, creating: false };
+let state: DecksState = { slide: 1, creating: false, revealed: 0 };
 const listeners = new Set<() => void>();
 
 const set = (patch: Partial<DecksState>): void => {
@@ -76,8 +88,10 @@ export const useOpenDeck = (): DeckEntry | undefined => {
   return selected ? deckById(selected) : undefined;
 };
 
-export const openDeck = (id: string, slide = 1): void => set({ selected: id, slide });
-export const closeDeck = (): void => set({ selected: undefined, slide: 1 });
+export const openDeck = (id: string, slide = 1): void =>
+  set({ selected: id, slide, revealed: state.revealed + 1 });
+export const closeDeck = (): void =>
+  set({ selected: undefined, slide: 1, revealed: state.revealed + 1 });
 export const goToSlide = (slide: number): void => set({ slide: Math.max(1, slide) });
 export const nextSlide = (): void => {
   const entry = state.selected ? deckById(state.selected) : undefined;
@@ -87,12 +101,28 @@ export const nextSlide = (): void => {
 export const previousSlide = (): void => set({ slide: Math.max(1, state.slide - 1) });
 export const beginNewDeck = (): void => set({ creating: true });
 export const cancelNewDeck = (): void => set({ creating: false });
+/** Open the rename dialog for a deck — the open one when none is named. */
+export const beginRename = (id?: string): void => {
+  const target = id ?? state.selected;
+  if (target && deckById(target)) {
+    set({ renaming: target });
+  }
+};
+export const cancelRename = (): void => set({ renaming: undefined });
+/** Open the delete confirmation for a deck — the open one when none is named. */
+export const beginDelete = (id?: string): void => {
+  const target = id ?? state.selected;
+  if (target && deckById(target)) {
+    set({ deleting: target });
+  }
+};
+export const cancelDelete = (): void => set({ deleting: undefined });
 export const configureDecksBackend = (backendUrl: string | undefined): void =>
   set({ backendUrl: backendUrl?.replace(/\/+$/, '') || undefined });
 
 /** For tests: back to the first frame. */
 export const resetDecksState = (): void => {
-  state = { slide: 1, creating: false };
+  state = { slide: 1, creating: false, revealed: 0 };
   listeners.forEach((listener) => listener());
 };
 
@@ -122,7 +152,12 @@ export type NewDeckInput = {
  */
 export const newDeckSpec = ({ title, subtitle, template }: NewDeckInput): DeckSpec => {
   const slides: SlideSpec[] = [
-    { type: 'title', title, subtitle, meta: new Date().toISOString().slice(0, 10) },
+    {
+      type: 'title',
+      title,
+      subtitle,
+      meta: new Date().toISOString().slice(0, 10),
+    },
     { type: 'section', title: 'First section' },
     {
       type: 'bullets',
@@ -131,13 +166,23 @@ export const newDeckSpec = ({ title, subtitle, template }: NewDeckInput): DeckSp
     },
   ];
   return {
-    deck: { title, subtitle, template: template ?? 'datalayer', transition: 'slide' },
+    deck: {
+      title,
+      subtitle,
+      template: template ?? 'datalayer',
+      transition: 'slide',
+    },
     slides,
   } as DeckSpec;
 };
 
 /** What the backend stores and returns for one deck. */
-export type DeckRecord = { id: string; collection?: string; slug: string; spec: DeckSpec };
+export type DeckRecord = {
+  id: string;
+  collection?: string;
+  slug: string;
+  spec: DeckSpec;
+};
 
 const toEntry = (record: DeckRecord): DeckEntry => ({
   collection: record.collection || undefined,
@@ -248,7 +293,14 @@ export const addDeck = async (
   };
   registerDecks([entry]);
   if (options.open !== false) {
-    set({ creating: false, selected: deckId(entry), slide: 1 });
+    // Opened, and an ask to see it — a deck just made and not on screen is
+    // a "create" that looks like it did nothing.
+    set({
+      creating: false,
+      selected: deckId(entry),
+      slide: 1,
+      revealed: state.revealed + 1,
+    });
   }
   await persist(
     'POST',
@@ -287,7 +339,10 @@ export const replaceDeck = async (
   }
   registerDecks([entry]);
   if (state.selected === id) {
-    set({ selected: deckId(entry), slide: Math.min(state.slide, spec.slides.length || 1) });
+    set({
+      selected: deckId(entry),
+      slide: Math.min(state.slide, spec.slides.length || 1),
+    });
   }
   await persist(
     'PUT',
@@ -298,12 +353,45 @@ export const replaceDeck = async (
   return { entry, issues: validateDeck(spec) };
 };
 
+/** What a rename may change: the title on the deck, and its address. */
+export type RenameInput = {
+  title?: string;
+  slug?: string;
+  collection?: string;
+};
+
+/**
+ * Rename a deck: a new title, a new address, or both.
+ *
+ * The same record, moved: `replaceDeck` re-registers it under the new id and
+ * the server moves the file. The dialog closes whatever happened to the save;
+ * a backend that is down leaves a message in the list, as every write does.
+ */
+export const renameDeck = async (id: string, input: RenameInput): Promise<DeckWriteResult> => {
+  const current = deckById(id);
+  if (!current) {
+    throw new Error(`There is no deck ${id} to rename.`);
+  }
+  const title = input.title?.trim() || current.spec.deck.title;
+  const result = await replaceDeck(id, {
+    collection: input.collection === undefined ? undefined : input.collection.trim(),
+    slug: input.slug?.trim() || undefined,
+    spec: { ...current.spec, deck: { ...current.spec.deck, title } },
+  });
+  set({ renaming: undefined });
+  return result;
+};
+
 /** Remove a deck from the catalog, and from the server when there is one. */
 export const removeDeck = async (id: string): Promise<boolean> => {
   if (!deckById(id)) {
     return false;
   }
   unregisterDeck(id);
+  set({
+    deleting: undefined,
+    renaming: state.renaming === id ? undefined : state.renaming,
+  });
   if (state.selected === id) {
     closeDeck();
   }
@@ -316,38 +404,124 @@ export const removeDeck = async (id: string): Promise<boolean> => {
   return true;
 };
 
+/** A 1-based slide number that exists in a deck of `total` slides. */
+const assertSlideNumber = (slide: number, total: number): void => {
+  if (!Number.isInteger(slide) || slide < 1 || slide > total) {
+    throw new Error(`There is no slide ${slide}; the deck has ${total}.`);
+  }
+};
+
+/**
+ * Change a deck's slides and open it on the slide that changed.
+ *
+ * The three per-slide writes below are this with a different edit: copy the
+ * slides, apply the edit — which says where it landed — replace the deck,
+ * which saves it, then open it there. An agent's change is on screen, not
+ * only on disk; a "replace slide 3" that left the deck closed would look
+ * like it did nothing.
+ */
+const changeSlides = async (
+  id: string,
+  change: (slides: SlideSpec[]) => number,
+): Promise<DeckWriteResult> => {
+  const current = deckById(id);
+  if (!current) {
+    throw new Error(`There is no deck ${id}.`);
+  }
+  const slides = [...current.spec.slides];
+  const focus = change(slides);
+  const result = await replaceDeck(id, { spec: { ...current.spec, slides } });
+  openDeck(deckId(result.entry), Math.min(Math.max(1, focus), slides.length || 1));
+  return result;
+};
+
+/** Replace one slide, by its 1-based number, leaving the rest as they are. */
+export const updateSlide = (
+  id: string,
+  slide: number,
+  slideSpec: SlideSpec,
+): Promise<DeckWriteResult> =>
+  changeSlides(id, (slides) => {
+    assertSlideNumber(slide, slides.length);
+    slides[slide - 1] = slideSpec;
+    return slide;
+  });
+
+/** Insert a slide before the given 1-based position; past the end appends. */
+export const insertSlide = (
+  id: string,
+  position: number,
+  slideSpec: SlideSpec,
+): Promise<DeckWriteResult> =>
+  changeSlides(id, (slides) => {
+    const at = Math.max(1, Math.min(Math.trunc(position) || 1, slides.length + 1));
+    slides.splice(at - 1, 0, slideSpec);
+    return at;
+  });
+
+/** Remove one slide by its 1-based number. A deck keeps at least one. */
+export const deleteSlide = (id: string, slide: number): Promise<DeckWriteResult> =>
+  changeSlides(id, (slides) => {
+    assertSlideNumber(slide, slides.length);
+    if (slides.length === 1) {
+      throw new Error('A deck needs at least one slide; delete the deck instead.');
+    }
+    slides.splice(slide - 1, 1);
+    return Math.max(1, slide - 1);
+  });
+
+/** What presenting came to. Browsers grant fullscreen only from a person's click. */
+export type PresentOutcome = 'entered' | 'exited' | 'blocked' | 'none';
+
 /**
  * Present: the browser's own fullscreen, on the element Reveal measures.
- * Returns whether there was a deck on screen to present.
+ *
+ * Honest about the one thing a page cannot decide: fullscreen needs a
+ * person's gesture, so a call made by an agent's tool rather than a click is
+ * refused by the browser. That comes back as `blocked` — for the caller to
+ * say "press F" — rather than as a silent nothing.
  */
-export const presentOpenDeck = (): boolean => {
+export const presentOpenDeck = async (): Promise<PresentOutcome> => {
   if (typeof document === 'undefined') {
-    return false;
+    return 'none';
   }
   const deck = document.querySelector('.dla-deck') as HTMLElement | null;
   if (!deck) {
-    return false;
+    return 'none';
   }
   if (document.fullscreenElement) {
-    void document.exitFullscreen();
-  } else {
-    void deck.requestFullscreen?.();
-    // An embedded deck ignores the keyboard until it has been clicked;
-    // Reveal takes focus on a `pointerdown`. Tell it what the click would.
-    deck.dispatchEvent(new Event('pointerdown'));
+    await document.exitFullscreen().catch(() => undefined);
+    return 'exited';
   }
-  return true;
+  if (typeof deck.requestFullscreen !== 'function') {
+    return 'blocked';
+  }
+  try {
+    await deck.requestFullscreen();
+  } catch {
+    return 'blocked';
+  }
+  // An embedded deck ignores the keyboard until it has been clicked; Reveal
+  // takes focus on a `pointerdown`. Tell it what the click would.
+  deck.dispatchEvent(new Event('pointerdown'));
+  return 'entered';
 };
 
-/** Print: the print view of the open deck in a tab of its own; its address, or none. */
-export const printOpenDeck = (): string | undefined => {
+/**
+ * Print: the print view of the open deck in a tab of its own.
+ *
+ * Returns the address and whether the tab opened — a popup blocker refuses a
+ * `window.open` that no click asked for, and the address is then the thing
+ * to hand over.
+ */
+export const printOpenDeck = (): { path: string; opened: boolean } | undefined => {
   const entry = state.selected ? deckById(state.selected) : undefined;
   if (!entry || typeof window === 'undefined') {
     return undefined;
   }
   const path = deckPrintPath(entry);
-  window.open(path, '_blank', 'noopener');
-  return path;
+  const opened = window.open(path, '_blank', 'noopener') !== null;
+  return { path, opened };
 };
 
 /**
