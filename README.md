@@ -31,8 +31,12 @@ Installing the package adds a `decks` group to the Datalayer CLI — `serve`,
 `list`, `show`, `delete` — through the reactor's `datalayer.cli` entry-point
 group; `datalayer-decks` is the same group on its own. `serve` runs the decks
 API (`/decks`, JSON specs on disk) and the interface built from
-[`app/`](app/) from one origin. Set `DATALAYER_DECKS_DIR` (or `--decks-dir`)
-to choose where decks are stored (`~/.datalayer/decks` otherwise).
+[`app/`](app/) from one origin. The interface is a Reactor shell: the decks
+plugin in the sidebar and main slots, the plugins manager, the command
+palette, and — at the header's right edge — the appearance menu of
+`@datalayer/primer-addons`, the color mode and theme chooser the Datalayer
+header wears. Set `DATALAYER_DECKS_DIR` (or `--decks-dir`) to choose where
+decks are stored (`~/.datalayer/decks` otherwise).
 
 Installed beside any other Reactor host, the same wheel publishes itself as an
 extension: the routes join that host, and the Decks plugin — built by

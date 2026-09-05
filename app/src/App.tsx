@@ -8,8 +8,10 @@
  * The Decks shell: the reactor shell plugin, the decks plugin, and the two
  * plugins every Reactor host is better with — the manager and the palette.
  *
- * The layout is three slots: `header` for the shell's view selector and the
- * theme control, `sidebar` for the list of decks, `main` for the open deck.
+ * The layout is three slots: `header` for the shell's view selector and, at
+ * its right edge, the appearance menu — color mode, theme, description and
+ * preview, the control the public Datalayer header wears — `sidebar` for the
+ * list of decks, `main` for the open deck.
  * `root` is rendered once for plugins that position themselves — the palette
  * and the "new deck" dialog.
  *
@@ -27,7 +29,7 @@ import {
 } from '@datalayer/reactor';
 import { ReactorSlot, useReactor } from '@datalayer/reactor/react';
 import { Box } from '@datalayer/primer-addons';
-import { ThemePlugin } from '@datalayer/primer-addons/lib/reactor';
+import { AppearancePlugin, ThemePlugin } from '@datalayer/primer-addons/lib/reactor';
 import { ShellPlugin } from '@datalayer/reactor-shell';
 import { PluginsManagerPlugin } from '@datalayer/reactor-manager';
 import { CommandsPlugin } from '@datalayer/reactor-commands';
@@ -130,6 +132,10 @@ function createReactor(remotes: (LazyPluginRef | ReactorExtension)[]) {
     PluginsManagerPlugin,
     CommandsPlugin,
     ThemePlugin,
+    // The appearance menu, in the header slot after the view selector: the
+    // theme plugin above is its dependency, listed anyway so the portals
+    // follow the mode even in a host that drops the menu.
+    AppearancePlugin,
     ...remotes,
   ]);
 }
