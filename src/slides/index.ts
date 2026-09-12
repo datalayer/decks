@@ -10,12 +10,13 @@ import { ComponentSlide } from './ComponentSlide';
 import {
   ChartSlide,
   ComparisonSlide,
+  FlowSlide,
   MetricsSlide,
   TimelineSlide,
 } from './DataSlides';
-import { CodeSlide, ImageSlide, LogosSlide } from './MediaSlides';
+import { ArtifactSlide, CodeSlide, ImageSlide, LogosSlide } from './MediaSlides';
 import { BulletsSlide, QuoteSlide, StatementSlide } from './TextSlides';
-import { SectionSlide, TitleSlide } from './TitleSlides';
+import { ClosingSlide, SectionSlide, TitleSlide } from './TitleSlides';
 
 export * from './Blocks';
 export * from './ColumnsSlide';
@@ -42,15 +43,18 @@ export const DEFAULT_LAYOUTS: Record<SlideType, SlideComponent> = {
   'two-columns': ColumnsSlide,
   'three-columns': ColumnsSlide,
   metrics: MetricsSlide,
+  artifact: ArtifactSlide,
   image: ImageSlide,
   screenshot: ImageSlide,
   quote: QuoteSlide,
   comparison: ComparisonSlide,
+  flow: FlowSlide,
   timeline: TimelineSlide,
   chart: ChartSlide,
   logos: LogosSlide,
   code: CodeSlide,
   component: ComponentSlide,
+  closing: ClosingSlide,
 };
 
 export const SLIDE_TYPES = Object.keys(DEFAULT_LAYOUTS) as SlideType[];

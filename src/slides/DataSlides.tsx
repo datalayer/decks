@@ -11,10 +11,60 @@ import { Metrics, stepped } from './Blocks';
 import type {
   ChartSlideSpec,
   ComparisonSlideSpec,
+  FlowSlideSpec,
   MetricsSlideSpec,
   SlideComponentProps,
   TimelineSlideSpec,
 } from '../types';
+
+/**
+ * A causal sequence: the product loop, a funnel, or how value compounds.
+ *
+ * Unlike a timeline, the stages are connected by directional arrows and do
+ * not imply dates. This is the missing shape for "A leads to B leads to C".
+ */
+export const FlowSlide = ({
+  slide,
+  theme,
+  footer,
+  index,
+  total,
+}: SlideComponentProps<FlowSlideSpec>): JSX.Element => (
+  <SlideFrame
+    theme={theme}
+    footer={footer}
+    index={index}
+    total={total}
+    title={slide.title}
+    backdrop={slide.backdrop}
+    subtitle={slide.subtitle}
+    layout={slide.layout}
+    variant="flow"
+  >
+    <ol
+      className="dla-flow"
+      style={{ '--dla-flow-columns': Math.min(slide.items.length, 5) } as never}
+    >
+      {slide.items.map((item, position) => {
+        const key = `${position}-${item.title}`;
+        return stepped(
+          <li
+            key={key}
+            className={`dla-flow-item${item.current ? ' dla-flow-item--current' : ''}`}
+          >
+            <div className="dla-flow-marker">{item.label ?? position + 1}</div>
+            <div className="dla-flow-title">{inline(item.title)}</div>
+            {item.detail && (
+              <div className="dla-flow-detail">{inline(item.detail)}</div>
+            )}
+          </li>,
+          slide.fragments,
+          key,
+        );
+      })}
+    </ol>
+  </SlideFrame>
+);
 
 /** The numbers, big enough to read from the back of the room. */
 export const MetricsSlide = ({

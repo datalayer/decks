@@ -10,10 +10,41 @@ import { SlideBackdrop } from '../chrome/SlideBackdrop';
 import { inline } from '../inline';
 import { deckComponent } from '../registry/components';
 import type {
+  ClosingSlideSpec,
   SectionSlideSpec,
   SlideComponentProps,
   TitleSlideSpec,
 } from '../types';
+
+/**
+ * The final frame: visually conclusive, quieter than a title slide, and with
+ * an explicit invitation to continue the conversation.
+ */
+export const ClosingSlide = ({
+  slide,
+  theme,
+  footer,
+  index,
+  total,
+}: SlideComponentProps<ClosingSlideSpec>): JSX.Element => (
+  <div className="dla-slide dla-slide--closing">
+    <SlideBackdrop name={slide.backdrop} />
+    <div className="dla-closing">
+      <div className="dla-closing-rule" aria-hidden />
+      <h2 className="dla-closing-title">{inline(slide.title)}</h2>
+      {slide.subtitle && (
+        <p className="dla-closing-subtitle">{inline(slide.subtitle)}</p>
+      )}
+      {slide.cta && <p className="dla-closing-cta">{inline(slide.cta)}</p>}
+      {slide.contact && (
+        <div className="dla-closing-contact">{inline(slide.contact)}</div>
+      )}
+    </div>
+    {footer && (
+      <DeckFooter footer={footer} theme={theme} index={index} total={total} />
+    )}
+  </div>
+);
 
 /**
  * The first slide: the name of the thing, and who is saying it.

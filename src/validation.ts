@@ -29,15 +29,18 @@ const REQUIRED: Partial<Record<SlideSpec['type'], string[]>> = {
   statement: ['statement'],
   bullets: ['items'],
   metrics: ['metrics'],
+  artifact: ['title', 'visual'],
   image: ['src'],
   screenshot: ['src'],
   quote: ['quote'],
   comparison: ['columns', 'rows'],
+  flow: ['items'],
   timeline: ['items'],
   chart: ['series'],
   logos: ['logos'],
   code: ['code'],
   component: ['component'],
+  closing: ['title'],
 };
 
 /** Every component a block names, through any stacks it is made of. */
@@ -126,6 +129,19 @@ export const validateDeck = (spec: DeckSpec): DeckIssue[] => {
         where,
         message:
           `Unknown component "${slide.component}". Register it in ` +
+          'registry/componentsRegistry.ts.',
+      });
+    }
+
+    if (
+      slide.type === 'artifact' &&
+      slide.visual?.component &&
+      !hasDeckComponent(slide.visual.component)
+    ) {
+      issues.push({
+        where,
+        message:
+          `Unknown artifact component "${slide.visual.component}". Register it in ` +
           'registry/componentsRegistry.ts.',
       });
     }

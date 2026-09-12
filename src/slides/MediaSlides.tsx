@@ -7,13 +7,79 @@
 import type { JSX } from 'react';
 import { SlideFrame } from '../chrome/SlideFrame';
 import { inline } from '../inline';
-import { CodeBlock, stepped } from './Blocks';
+import { deckComponent } from '../registry/components';
+import { Bullets, CodeBlock, stepped } from './Blocks';
 import type {
+  ArtifactSlideSpec,
   CodeSlideSpec,
   ImageSlideSpec,
   LogosSlideSpec,
   SlideComponentProps,
 } from '../types';
+
+/**
+ * A real product artifact, large enough to inspect, with only the callouts
+ * required to read it. The visual may be an image URL or a registered host
+ * component, which lets a deck reserve the composition before captures land.
+ */
+export const ArtifactSlide = ({
+  slide,
+  theme,
+  footer,
+  index,
+  total,
+}: SlideComponentProps<ArtifactSlideSpec>): JSX.Element => {
+  const visual = slide.visual;
+  const Visual = visual.component ? deckComponent(visual.component) : undefined;
+  const classes = ['dla-artifact'];
+  if (slide.layout === 'wide-right') {
+    classes.push('dla-artifact--wide-right');
+  }
+  if (slide.layout === 'centered') {
+    classes.push('dla-artifact--centered');
+  }
+  return (
+    <SlideFrame
+      theme={theme}
+      footer={footer}
+      index={index}
+      total={total}
+      title={slide.title}
+      backdrop={slide.backdrop}
+      subtitle={slide.subtitle}
+      layout={slide.layout}
+      variant="artifact"
+    >
+      <div className={classes.join(' ')}>
+        <figure className="dla-artifact-visual">
+          {visual.src ? (
+            <img
+              src={visual.src}
+              alt={visual.alt ?? slide.title}
+              className={visual.fit === 'cover' ? 'dla-artifact-image--cover' : undefined}
+            />
+          ) : Visual ? (
+            <Visual {...(visual.props ?? {})} />
+          ) : (
+            <div className="dla-slide-error">
+              Unknown component <code>{visual.component}</code>.
+            </div>
+          )}
+          {visual.caption && <figcaption>{inline(visual.caption)}</figcaption>}
+        </figure>
+        {slide.items?.length ? (
+          <div className="dla-artifact-callouts">
+            <Bullets
+              items={slide.items}
+              icon={slide.icon ?? 'check'}
+              fragments={slide.fragments}
+            />
+          </div>
+        ) : null}
+      </div>
+    </SlideFrame>
+  );
+};
 
 /**
  * A picture, and the option of nothing else.

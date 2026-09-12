@@ -41,15 +41,18 @@ export type SlideType =
   | 'two-columns'
   | 'three-columns'
   | 'metrics'
+  | 'artifact'
   | 'image'
   | 'screenshot'
   | 'quote'
   | 'comparison'
+  | 'flow'
   | 'timeline'
   | 'chart'
   | 'logos'
   | 'code'
-  | 'component';
+  | 'component'
+  | 'closing';
 
 /**
  * How the body of a slide is arranged.
@@ -150,6 +153,15 @@ export type TimelineItemSpec = {
   current?: boolean;
 };
 
+export type FlowItemSpec = {
+  /** A compact step marker such as "01", "LAND", or "CI". */
+  label?: string;
+  title: string;
+  detail?: string;
+  /** Emphasises the step where value is captured or the customer is today. */
+  current?: boolean;
+};
+
 export type ComparisonRowSpec = {
   label: string;
   /** One cell per column of the comparison, in the columns' own order. */
@@ -214,6 +226,34 @@ export type MetricsSlideSpec = SlideBase & {
   metrics: MetricSpec[];
 };
 
+/** The visual evidence on an artifact slide: a file now, or a host component. */
+export type ArtifactVisualSpec =
+  | {
+      src: string;
+      component?: never;
+      props?: never;
+      alt?: string;
+      caption?: string;
+      fit?: 'contain' | 'cover';
+    }
+  | {
+      component: string;
+      props?: Record<string, unknown>;
+      src?: never;
+      alt?: string;
+      caption?: string;
+      fit?: never;
+    };
+
+/** A product capture with the few callouts an audience should notice. */
+export type ArtifactSlideSpec = SlideBase & {
+  type: 'artifact';
+  title: string;
+  visual: ArtifactVisualSpec;
+  items?: string[];
+  icon?: BulletIcon;
+};
+
 export type ImageSlideSpec = SlideBase & {
   type: 'image' | 'screenshot';
   src: string;
@@ -241,6 +281,12 @@ export type ComparisonSlideSpec = SlideBase & {
 export type TimelineSlideSpec = SlideBase & {
   type: 'timeline';
   items: TimelineItemSpec[];
+};
+
+export type FlowSlideSpec = SlideBase & {
+  type: 'flow';
+  /** Three to five stages read best across a 16:9 slide. */
+  items: FlowItemSpec[];
 };
 
 export type ChartSlideSpec = SlideBase & {
@@ -276,6 +322,14 @@ export type ComponentSlideSpec = SlideBase & {
   props?: Record<string, unknown>;
 };
 
+/** The deliberate last frame: gratitude, invitation, and a way to continue. */
+export type ClosingSlideSpec = SlideBase & {
+  type: 'closing';
+  title: string;
+  cta?: string;
+  contact?: string;
+};
+
 export type SlideSpec =
   | TitleSlideSpec
   | SectionSlideSpec
@@ -283,14 +337,17 @@ export type SlideSpec =
   | BulletsSlideSpec
   | ColumnsSlideSpec
   | MetricsSlideSpec
+  | ArtifactSlideSpec
   | ImageSlideSpec
   | QuoteSlideSpec
   | ComparisonSlideSpec
+  | FlowSlideSpec
   | TimelineSlideSpec
   | ChartSlideSpec
   | LogosSlideSpec
   | CodeSlideSpec
-  | ComponentSlideSpec;
+  | ComponentSlideSpec
+  | ClosingSlideSpec;
 
 // --- Decks ----------------------------------------------------------------
 

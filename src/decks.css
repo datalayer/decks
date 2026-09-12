@@ -420,6 +420,87 @@ html.reveal-print .dla-deck {
   background: var(--dla-deck-accent);
 }
 
+/* --- Closing --------------------------------------------------------------- */
+
+.dla-deck .dla-slide--closing {
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 22%, var(--dla-deck-accent-soft), transparent 34%),
+    radial-gradient(circle at 16% 84%, var(--dla-deck-accent-soft), transparent 30%),
+    var(--dla-deck-background);
+}
+
+.dla-deck .dla-slide--closing::before,
+.dla-deck .dla-slide--closing::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  width: 360px;
+  height: 360px;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+
+.dla-deck .dla-slide--closing::before {
+  top: -210px;
+  right: -90px;
+}
+
+.dla-deck .dla-slide--closing::after {
+  bottom: -245px;
+  left: -100px;
+}
+
+.dla-deck .dla-closing {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  max-width: 940px;
+  margin: 0 auto;
+}
+
+.dla-deck .dla-closing-rule {
+  width: 72px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-closing-title {
+  font-size: calc(var(--dla-deck-title-size) * 1.08);
+  letter-spacing: -0.04em;
+}
+
+.dla-deck .dla-closing-subtitle {
+  max-width: 24em;
+  color: var(--dla-deck-muted);
+  font-size: 30px;
+  line-height: 1.35;
+}
+
+.dla-deck .dla-closing-cta {
+  margin-top: 12px;
+  padding: 14px 24px;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 999px;
+  background: var(--dla-deck-surface);
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.dla-deck .dla-closing-contact {
+  color: var(--dla-deck-accent);
+  font-family: var(--dla-deck-font-mono);
+  font-size: 18px;
+  letter-spacing: 0.025em;
+}
+
 .dla-deck .dla-slide-eyebrow {
   font-size: 17px;
   letter-spacing: 0.14em;
@@ -601,6 +682,72 @@ html.reveal-print .dla-deck {
 
 /* --- Images ------------------------------------------------------------------- */
 
+/* A screenshot or live illustration with the few facts it proves beside it. */
+.dla-deck .dla-artifact {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
+  grid-template-areas: 'visual callouts';
+  align-items: stretch;
+  gap: 34px;
+  height: 100%;
+  min-height: 0;
+}
+
+.dla-deck .dla-artifact--wide-right {
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 1.55fr);
+  grid-template-areas: 'callouts visual';
+}
+
+.dla-deck .dla-artifact--centered {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'visual' 'callouts';
+}
+
+.dla-deck .dla-artifact-visual {
+  grid-area: visual;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 14px;
+  background: var(--dla-deck-surface);
+  box-shadow: 0 18px 48px var(--dla-deck-shadow);
+}
+
+.dla-deck .dla-artifact-visual > img,
+.dla-deck .dla-artifact-visual > svg,
+.dla-deck .dla-artifact-visual > div:not(.dla-slide-error) {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.dla-deck .dla-artifact-visual .dla-artifact-image--cover {
+  object-fit: cover;
+}
+
+.dla-deck .dla-artifact-visual figcaption {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-top: 1px solid var(--dla-deck-border);
+  color: var(--dla-deck-muted);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.dla-deck .dla-artifact-callouts {
+  grid-area: callouts;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
 .dla-deck .dla-figure {
   margin: 0;
   display: flex;
@@ -700,6 +847,79 @@ html.reveal-print .dla-deck {
 
 .dla-deck .dla-comparison-no {
   color: var(--dla-deck-muted);
+}
+
+/* --- Flow ------------------------------------------------------------------------ */
+
+.dla-deck .dla-flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--dla-flow-columns, 4), minmax(0, 1fr));
+  gap: 26px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.dla-deck .dla-flow-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 190px;
+  padding: 26px 24px;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--dla-deck-surface) 90%, transparent);
+}
+
+.dla-deck .dla-flow-item:not(:last-child)::after {
+  content: '\2192';
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  z-index: 2;
+  width: 24px;
+  transform: translateY(-50%);
+  color: var(--dla-deck-accent);
+  font-size: 26px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dla-deck .dla-flow-item--current {
+  border-color: var(--dla-deck-accent);
+  background: var(--dla-deck-accent-soft);
+  box-shadow: inset 0 4px 0 var(--dla-deck-accent);
+}
+
+.dla-deck .dla-flow-marker {
+  align-self: flex-start;
+  min-width: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--dla-deck-accent);
+  color: var(--dla-deck-accent-contrast);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dla-deck .dla-flow-title {
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.dla-deck .dla-flow-detail {
+  color: var(--dla-deck-muted);
+  font-size: 17px;
+  line-height: 1.4;
 }
 
 /* --- Timeline -------------------------------------------------------------------- */
