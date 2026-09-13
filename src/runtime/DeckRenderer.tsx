@@ -183,6 +183,7 @@ const cssVariables = (theme: DeckTheme): CSSProperties =>
     '--dla-deck-code-background': theme.codeBackground,
     '--dla-deck-shadow': theme.shadow,
     '--dla-deck-danger': theme.danger,
+    '--dla-deck-success': theme.success,
     '--dla-deck-code-keyword': theme.code.keyword,
     '--dla-deck-code-string': theme.code.string,
     '--dla-deck-code-comment': theme.code.comment,

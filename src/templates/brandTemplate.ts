@@ -42,6 +42,7 @@ const theme = ({ palette, colorMode }: DeckThemeContext): DeckTheme => ({
   codeBackground: palette.bg,
   shadow: palette.isLight ? 'rgb(0 0 0 / 16%)' : 'rgb(0 0 0 / 44%)',
   danger: 'var(--fgColor-danger)',
+  success: 'var(--fgColor-success)',
   // The theme's own bright colours, which every variant defines.
   code: {
     keyword: palette.pop,

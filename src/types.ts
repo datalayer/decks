@@ -481,6 +481,8 @@ export type DeckTheme = {
   shadow: string;
   /** What a spec that does not add up is drawn in. */
   danger: string;
+  /** What a spec draws on to mean progress, growth, or "this is working". */
+  success: string;
   /**
    * Syntax colours for code slides.
    *

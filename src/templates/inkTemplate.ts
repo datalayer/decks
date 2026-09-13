@@ -41,6 +41,7 @@ const theme: DeckTheme = {
   codeBackground: '#070b0f',
   shadow: 'rgb(0 0 0 / 55%)',
   danger: '#ff8080',
+  success: datalayerColors.greenBright,
   code: {
     keyword: '#ff7b9c',
     string: '#7ee2b8',

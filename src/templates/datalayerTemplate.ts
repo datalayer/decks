@@ -78,6 +78,7 @@ const theme: DeckTheme = {
   // Primer's `--shadow-*` tokens — which are whole shadow values — do not fit.
   shadow: 'rgb(0 0 0 / 22%)',
   danger: 'var(--fgColor-danger)',
+  success: 'var(--fgColor-success)',
   // The functional tokens the application already colours code with, so a
   // code slide matches a code block anywhere else in any of the themes.
   code: {
