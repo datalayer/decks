@@ -7,6 +7,7 @@
 import type { JSX } from 'react';
 import type { ReactNode } from 'react';
 import type { DeckFooterSpec, DeckTheme, SlideLayout } from '../types';
+import { inline } from '../inline';
 import { DeckFooter } from './DeckFooter';
 import { SlideBackdrop } from './SlideBackdrop';
 
@@ -61,8 +62,8 @@ export const SlideFrame = ({
       <SlideBackdrop name={backdrop} />
       <div className="dla-slide-head">
         {eyebrow && <div className="dla-slide-eyebrow">{eyebrow}</div>}
-        {title && <h2 className="dla-slide-title">{title}</h2>}
-        {subtitle && <p className="dla-slide-subtitle">{subtitle}</p>}
+        {title && <h2 className="dla-slide-title">{inline(title)}</h2>}
+        {subtitle && <p className="dla-slide-subtitle">{inline(subtitle)}</p>}
       </div>
       <div className="dla-slide-body">{children}</div>
       {footer && (
