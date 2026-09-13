@@ -7,16 +7,16 @@
 import type { ReactNode } from 'react';
 
 /**
- * The three bits of markup a slide is allowed: `**bold**`, `` `code` `` and
- * `[label](href)`.
+ * The four bits of markup a slide is allowed: `**bold**`, `` `code` ``,
+ * `[label](href)` and `==alert==`.
  *
  * Not markdown, deliberately. A slide is a handful of words and a full
  * markdown renderer would let a spec smuggle in headings, tables and images
  * that the template has no say over — which is exactly the split this whole
- * layer exists to keep. Anything a spec cannot say in these three marks is a
+ * layer exists to keep. Anything a spec cannot say in these four marks is a
  * slide type, or the `component` escape hatch.
  */
-const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+const INLINE = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|==[^=]+==)/g;
 
 export const inline = (text: string): ReactNode[] =>
   text.split(INLINE).map((part, position) => {
@@ -28,6 +28,16 @@ export const inline = (text: string): ReactNode[] =>
     }
     if (part.startsWith('`') && part.endsWith('`')) {
       return <code key={key}>{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith('==') && part.endsWith('==')) {
+      // The one mark meant to be seen before it's read: a danger-toned
+      // highlight for the word in a sentence that is the actual claim, not
+      // just emphasis on it — so it reads again rather than recursing.
+      return (
+        <mark key={key} className="dla-alert">
+          {part.slice(2, -2)}
+        </mark>
+      );
     }
     const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
     if (link) {

@@ -231,6 +231,23 @@ html.reveal-print .dla-deck {
   font-size: 0.88em;
 }
 
+/*
+ * `==alert==`: the danger token as a highlight, not just a colour on the
+ * text — a reader's eye finds a coloured background before it finds a
+ * differently-coloured word. `color-mix` against `--dla-deck-danger` rather
+ * than a new theme token: every template already carries that one colour,
+ * so this reads correctly — and adapts with the theme — the moment it is
+ * used, in a deck of any template, without a change to `types.ts` or a
+ * template file.
+ */
+.dla-deck mark.dla-alert {
+  background: color-mix(in srgb, var(--dla-deck-danger) 20%, transparent);
+  color: var(--dla-deck-danger);
+  padding: 0.02em 0.3em;
+  border-radius: 0.3em;
+  font-weight: 650;
+}
+
 /* --- The frame every slide is built in ------------------------------------ */
 
 .dla-deck .dla-slide {
@@ -307,6 +324,10 @@ html.reveal-print .dla-deck {
   font-size: 26px;
   color: var(--dla-deck-muted);
   line-height: 1.35;
+  /* A literal newline in a spec's subtitle is a deliberate break, not
+     whitespace to collapse — `pre-line` keeps it while still wrapping the
+     rest of the sentence normally. */
+  white-space: pre-line;
 }
 
 .dla-deck .dla-slide-body {
