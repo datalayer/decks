@@ -11,11 +11,73 @@ import { Metrics, stepped } from './Blocks';
 import type {
   ChartSlideSpec,
   ComparisonSlideSpec,
+  FeatureShowcaseSlideSpec,
   FlowSlideSpec,
   MetricsSlideSpec,
   SlideComponentProps,
   TimelineSlideSpec,
 } from '../types';
+
+/** Five products, arranged around the one substrate they share. */
+export const FeatureShowcaseSlide = ({
+  slide,
+  theme,
+  footer,
+  index,
+  total,
+}: SlideComponentProps<FeatureShowcaseSlideSpec>): JSX.Element => (
+  <SlideFrame
+    theme={theme}
+    footer={footer}
+    index={index}
+    total={total}
+    title={slide.title}
+    backdrop={slide.backdrop}
+    subtitle={slide.subtitle}
+    variant="feature-showcase"
+  >
+    <div className="dla-feature-showcase">
+      <div className="dla-feature-core">
+        <div className="dla-feature-core-kicker">One shared substrate</div>
+        <div className="dla-feature-core-title">{inline(slide.coreTitle)}</div>
+        {slide.coreDetail && (
+          <div className="dla-feature-core-detail">{inline(slide.coreDetail)}</div>
+        )}
+      </div>
+      {slide.features.map((feature, position) => {
+        const className = `dla-feature-card dla-feature-card--${position + 1}`;
+        const body = (
+          <>
+            <div className="dla-feature-status">{inline(feature.status)}</div>
+            <div className="dla-feature-title">{inline(feature.title)}</div>
+            {feature.detail && <div className="dla-feature-detail">{inline(feature.detail)}</div>}
+          </>
+        );
+        return stepped(
+          feature.href ? (
+            <a className={className} href={feature.href} key={feature.title}>
+              {body}
+            </a>
+          ) : (
+            <div className={className} key={feature.title}>
+              {body}
+            </div>
+          ),
+          slide.fragments,
+          `${position}-${feature.title}`,
+        );
+      })}
+      {slide.channels?.length ? (
+        <div className="dla-feature-channels">
+          <span>Reachable from</span>
+          {slide.channels.map((channel) => (
+            <strong key={channel}>{channel}</strong>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  </SlideFrame>
+);
 
 /**
  * A causal sequence: the product loop, a funnel, or how value compounds.
@@ -48,15 +110,10 @@ export const FlowSlide = ({
       {slide.items.map((item, position) => {
         const key = `${position}-${item.title}`;
         return stepped(
-          <li
-            key={key}
-            className={`dla-flow-item${item.current ? ' dla-flow-item--current' : ''}`}
-          >
+          <li key={key} className={`dla-flow-item${item.current ? ' dla-flow-item--current' : ''}`}>
             <div className="dla-flow-marker">{item.label ?? position + 1}</div>
             <div className="dla-flow-title">{inline(item.title)}</div>
-            {item.detail && (
-              <div className="dla-flow-detail">{inline(item.detail)}</div>
-            )}
+            {item.detail && <div className="dla-flow-detail">{inline(item.detail)}</div>}
           </li>,
           slide.fragments,
           key,
@@ -111,7 +168,7 @@ export const ComparisonSlide = ({
       index={index}
       total={total}
       title={slide.title}
-    backdrop={slide.backdrop}
+      backdrop={slide.backdrop}
       subtitle={slide.subtitle}
       variant="comparison"
     >
@@ -137,11 +194,7 @@ export const ComparisonSlide = ({
                   return (
                     <td key={`${cell}-${column}`} className={highlighted(cell)}>
                       {typeof value === 'boolean' ? (
-                        <span
-                          className={
-                            value ? 'dla-comparison-yes' : 'dla-comparison-no'
-                          }
-                        >
+                        <span className={value ? 'dla-comparison-yes' : 'dla-comparison-no'}>
                           {value ? '✓' : '—'}
                         </span>
                       ) : (
@@ -185,15 +238,11 @@ export const TimelineSlide = ({
         return stepped(
           <li
             key={key}
-            className={`dla-timeline-item${
-              item.current ? ' dla-timeline-item--current' : ''
-            }`}
+            className={`dla-timeline-item${item.current ? ' dla-timeline-item--current' : ''}`}
           >
             <div className="dla-timeline-when">{item.when}</div>
             <div className="dla-timeline-title">{inline(item.title)}</div>
-            {item.detail && (
-              <div className="dla-timeline-detail">{inline(item.detail)}</div>
-            )}
+            {item.detail && <div className="dla-timeline-detail">{inline(item.detail)}</div>}
           </li>,
           slide.fragments,
           key,
@@ -217,7 +266,7 @@ export const ChartSlide = ({
   index,
   total,
 }: SlideComponentProps<ChartSlideSpec>): JSX.Element => {
-  const values = slide.series.map(series => series.value);
+  const values = slide.series.map((series) => series.value);
   // A zero floor and a positive scale, so a series of zeroes renders as empty
   // bars rather than dividing by nothing.
   const max = Math.max(slide.max ?? 0, ...values, Number.EPSILON);
@@ -228,7 +277,7 @@ export const ChartSlide = ({
       index={index}
       total={total}
       title={slide.title}
-    backdrop={slide.backdrop}
+      backdrop={slide.backdrop}
       subtitle={slide.subtitle}
       variant="chart"
     >

@@ -870,6 +870,145 @@ html.reveal-print .dla-deck {
   color: var(--dla-deck-muted);
 }
 
+/* --- Feature showcase ---------------------------------------------------------- */
+
+.dla-deck .dla-feature-showcase {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+}
+
+.dla-deck .dla-feature-showcase::before {
+  content: '';
+  position: absolute;
+  inset: 38px 112px 92px;
+  border: 1px dashed var(--dla-deck-border);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--dla-deck-accent-soft), transparent 64%);
+}
+
+.dla-deck .dla-feature-core {
+  position: absolute;
+  z-index: 2;
+  top: 45%;
+  left: 50%;
+  width: 330px;
+  padding: 20px 26px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--dla-deck-accent);
+  border-radius: 18px;
+  background: var(--dla-deck-background);
+  box-shadow: 0 18px 44px var(--dla-deck-shadow);
+  text-align: center;
+}
+
+.dla-deck .dla-feature-core-kicker,
+.dla-deck .dla-feature-status {
+  color: var(--dla-deck-accent);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dla-deck .dla-feature-core-title {
+  margin-top: 5px;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.dla-deck .dla-feature-core-detail {
+  margin-top: 7px;
+  color: var(--dla-deck-muted);
+  font-size: 16px;
+}
+
+.dla-deck .dla-feature-card {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 220px;
+  min-height: 88px;
+  padding: 13px 16px;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 14px;
+  background: var(--dla-deck-surface);
+  color: var(--dla-deck-foreground);
+  text-align: left;
+  box-shadow: 0 10px 28px var(--dla-deck-shadow);
+}
+
+.dla-deck a.dla-feature-card:hover {
+  border-color: var(--dla-deck-accent);
+  text-decoration: none;
+  transform: translateY(-2px);
+}
+
+.dla-deck .dla-feature-card--1 {
+  top: 0;
+  left: 3%;
+}
+
+.dla-deck .dla-feature-card--2 {
+  top: 0;
+  right: 3%;
+}
+
+.dla-deck .dla-feature-card--3 {
+  bottom: 58px;
+  left: 0;
+}
+
+.dla-deck .dla-feature-card--4 {
+  bottom: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.dla-deck a.dla-feature-card--4:hover {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.dla-deck .dla-feature-card--5 {
+  right: 0;
+  bottom: 58px;
+}
+
+.dla-deck .dla-feature-title {
+  margin-top: 4px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.dla-deck .dla-feature-detail {
+  margin-top: 5px;
+  color: var(--dla-deck-muted);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.dla-deck .dla-feature-channels {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  color: var(--dla-deck-muted);
+  font-size: 14px;
+}
+
+.dla-deck .dla-feature-channels strong {
+  color: var(--dla-deck-foreground);
+  font-weight: 650;
+}
+
 /* --- Flow ------------------------------------------------------------------------ */
 
 .dla-deck .dla-flow {

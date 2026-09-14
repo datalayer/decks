@@ -47,6 +47,7 @@ export type SlideType =
   | 'quote'
   | 'comparison'
   | 'flow'
+  | 'feature-showcase'
   | 'timeline'
   | 'chart'
   | 'logos'
@@ -62,13 +63,7 @@ export type SlideType =
  * not honour a layout fall back to their own default arrangement.
  */
 export type SlideLayout =
-  | '1-column'
-  | '2-columns'
-  | '3-columns'
-  | 'wide-left'
-  | 'wide-right'
-  | 'centered'
-  | 'full-bleed';
+  '1-column' | '2-columns' | '3-columns' | 'wide-left' | 'wide-right' | 'centered' | 'full-bleed';
 
 /** What every slide may say, whatever its type. */
 export type SlideBase = {
@@ -160,6 +155,13 @@ export type FlowItemSpec = {
   detail?: string;
   /** Emphasises the step where value is captured or the customer is today. */
   current?: boolean;
+};
+
+export type FeatureShowcaseItemSpec = {
+  title: string;
+  status: string;
+  href?: string;
+  detail?: string;
 };
 
 export type ComparisonRowSpec = {
@@ -289,6 +291,16 @@ export type FlowSlideSpec = SlideBase & {
   items: FlowItemSpec[];
 };
 
+/** Five capabilities orbiting the one substrate they share. */
+export type FeatureShowcaseSlideSpec = SlideBase & {
+  type: 'feature-showcase';
+  title: string;
+  coreTitle: string;
+  coreDetail?: string;
+  features: FeatureShowcaseItemSpec[];
+  channels?: string[];
+};
+
 export type ChartSlideSpec = SlideBase & {
   type: 'chart';
   /** Bars, drawn in CSS: a deck chart is a shape, not a visualisation. */
@@ -342,6 +354,7 @@ export type SlideSpec =
   | QuoteSlideSpec
   | ComparisonSlideSpec
   | FlowSlideSpec
+  | FeatureShowcaseSlideSpec
   | TimelineSlideSpec
   | ChartSlideSpec
   | LogosSlideSpec

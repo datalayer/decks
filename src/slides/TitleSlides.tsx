@@ -32,17 +32,11 @@ export const ClosingSlide = ({
     <div className="dla-closing">
       <div className="dla-closing-rule" aria-hidden />
       <h2 className="dla-closing-title">{inline(slide.title)}</h2>
-      {slide.subtitle && (
-        <p className="dla-closing-subtitle">{inline(slide.subtitle)}</p>
-      )}
+      {slide.subtitle && <p className="dla-closing-subtitle">{inline(slide.subtitle)}</p>}
       {slide.cta && <p className="dla-closing-cta">{inline(slide.cta)}</p>}
-      {slide.contact && (
-        <div className="dla-closing-contact">{inline(slide.contact)}</div>
-      )}
+      {slide.contact && <div className="dla-closing-contact">{inline(slide.contact)}</div>}
     </div>
-    {footer && (
-      <DeckFooter footer={footer} theme={theme} index={index} total={total} />
-    )}
+    {footer && <DeckFooter footer={footer} theme={theme} index={index} total={total} />}
   </div>
 );
 
@@ -62,32 +56,23 @@ export const TitleSlide = ({
 }: SlideComponentProps<TitleSlideSpec>): JSX.Element => {
   const Visual = slide.visual ? deckComponent(slide.visual) : undefined;
   return (
-  <div className="dla-slide dla-slide--title">
-    <SlideBackdrop name={slide.backdrop} />
-    <div className="dla-slide-hero">
-      <div className="dla-slide-hero-rule" />
-      <h1 className="dla-slide-hero-title">{inline(slide.title)}</h1>
-      {slide.subtitle && (
-        <p className="dla-slide-hero-subtitle">{inline(slide.subtitle)}</p>
-      )}
-      {slide.meta && <div className="dla-slide-hero-meta">{inline(slide.meta)}</div>}
-      {Visual && (
-        // Under the words, in their column: the title is the slide and the
-        // visual is its signature, not a second subject beside it.
-        <div className="dla-slide-hero-visual">
-          <Visual {...(slide.visualProps ?? {})} />
-        </div>
-      )}
+    <div className="dla-slide dla-slide--title">
+      <SlideBackdrop name={slide.backdrop} />
+      <div className="dla-slide-hero">
+        <div className="dla-slide-hero-rule" />
+        <h1 className="dla-slide-hero-title">{inline(slide.title)}</h1>
+        {slide.subtitle && <p className="dla-slide-hero-subtitle">{inline(slide.subtitle)}</p>}
+        {slide.meta && <div className="dla-slide-hero-meta">{inline(slide.meta)}</div>}
+        {Visual && (
+          // Under the words, in their column: the title is the slide and the
+          // visual is its signature, not a second subject beside it.
+          <div className="dla-slide-hero-visual">
+            <Visual {...(slide.visualProps ?? {})} />
+          </div>
+        )}
+      </div>
+      {footer && <DeckFooter footer={footer} theme={theme} index={index} total={total} />}
     </div>
-    {footer && (
-      <DeckFooter
-        footer={footer}
-        theme={theme}
-        index={index}
-        total={total}
-      />
-    )}
-  </div>
   );
 };
 
@@ -104,21 +89,10 @@ export const SectionSlide = ({
   <div className="dla-slide dla-slide--section">
     <SlideBackdrop name={slide.backdrop} />
     <div className="dla-slide-hero">
-      <div className="dla-slide-eyebrow">
-        {String(index).padStart(2, '0')}
-      </div>
+      <div className="dla-slide-eyebrow">{String(index).padStart(2, '0')}</div>
       <h2 className="dla-slide-hero-title">{inline(slide.title)}</h2>
-      {slide.subtitle && (
-        <p className="dla-slide-hero-subtitle">{inline(slide.subtitle)}</p>
-      )}
+      {slide.subtitle && <p className="dla-slide-hero-subtitle">{inline(slide.subtitle)}</p>}
     </div>
-    {footer && (
-      <DeckFooter
-        footer={footer}
-        theme={theme}
-        index={index}
-        total={total}
-      />
-    )}
+    {footer && <DeckFooter footer={footer} theme={theme} index={index} total={total} />}
   </div>
 );

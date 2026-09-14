@@ -35,6 +35,7 @@ const REQUIRED: Partial<Record<SlideSpec['type'], string[]>> = {
   quote: ['quote'],
   comparison: ['columns', 'rows'],
   flow: ['items'],
+  'feature-showcase': ['title', 'coreTitle', 'features'],
   timeline: ['items'],
   chart: ['series'],
   logos: ['logos'],
@@ -106,12 +107,22 @@ export const validateDeck = (spec: DeckSpec): DeckIssue[] => {
       }
     }
 
+    if (
+      slide.type === 'feature-showcase' &&
+      Array.isArray(slide.features) &&
+      slide.features.length !== 5
+    ) {
+      issues.push({
+        where,
+        message: 'A "feature-showcase" slide needs exactly five features.',
+      });
+    }
+
     if (slide.type === 'title' && slide.visual && !hasDeckComponent(slide.visual)) {
       issues.push({
         where,
         message:
-          `Unknown visual "${slide.visual}". Register it in ` +
-          'registry/componentsRegistry.ts.',
+          `Unknown visual "${slide.visual}". Register it in ` + 'registry/componentsRegistry.ts.',
       });
     }
 

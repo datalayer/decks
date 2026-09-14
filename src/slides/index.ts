@@ -10,6 +10,7 @@ import { ComponentSlide } from './ComponentSlide';
 import {
   ChartSlide,
   ComparisonSlide,
+  FeatureShowcaseSlide,
   FlowSlide,
   MetricsSlide,
   TimelineSlide,
@@ -49,6 +50,7 @@ export const DEFAULT_LAYOUTS: Record<SlideType, SlideComponent> = {
   quote: QuoteSlide,
   comparison: ComparisonSlide,
   flow: FlowSlide,
+  'feature-showcase': FeatureShowcaseSlide,
   timeline: TimelineSlide,
   chart: ChartSlide,
   logos: LogosSlide,

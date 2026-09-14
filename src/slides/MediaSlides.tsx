@@ -69,11 +69,7 @@ export const ArtifactSlide = ({
         </figure>
         {slide.items?.length ? (
           <div className="dla-artifact-callouts">
-            <Bullets
-              items={slide.items}
-              icon={slide.icon ?? 'check'}
-              fragments={slide.fragments}
-            />
+            <Bullets items={slide.items} icon={slide.icon ?? 'check'} fragments={slide.fragments} />
           </div>
         ) : null}
       </div>
@@ -112,7 +108,7 @@ export const ImageSlide = ({
       index={index}
       total={total}
       title={slide.title}
-    backdrop={slide.backdrop}
+      backdrop={slide.backdrop}
       subtitle={slide.subtitle}
       layout={slide.layout}
       variant="image"
@@ -147,11 +143,7 @@ export const LogosSlide = ({
     <div className="dla-logos">
       {slide.logos.map((logo, position) => {
         const key = `${position}-${logo.name}`;
-        const body = logo.src ? (
-          <img src={logo.src} alt={logo.name} />
-        ) : (
-          <span>{logo.name}</span>
-        );
+        const body = logo.src ? <img src={logo.src} alt={logo.name} /> : <span>{logo.name}</span>;
         const cell = logo.href ? (
           <a
             key={key}
