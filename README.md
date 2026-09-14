@@ -1,8 +1,8 @@
 [![Datalayer](https://assets.datalayer.tech/datalayer-25.svg)](https://datalayer.io)
 
-# 📊 Datalayer Decks
+# ☰ 🃏 Datalayer Decks
 
-Presentations, described as data — and the [Reactor](https://reactor.datalayer.tech)
+Slide decks, described as data — and the [Reactor](https://reactor.datalayer.tech)
 plugin that puts them in any Reactor shell.
 
 ```
@@ -19,7 +19,7 @@ A spec says `type: metrics`; how a metrics slide looks is the template's
 business. That is what lets one deck be an application deck, a conference talk
 and a dark projection deck by changing one word.
 
-## Two halves, one install
+## Installation
 
 ```bash
 pip install datalayer_decks
@@ -45,7 +45,7 @@ extension: the routes join that host, and the Decks plugin — built by
 through [federation](https://reactor.datalayer.tech/federation), no import
 needed. See [python-packaged extensions](https://reactor.datalayer.tech/python-packaged-extensions).
 
-## The package
+## Usage
 
 ```ts
 import { registerDecks, DeckView, DecksHostProvider } from '@datalayer/decks';
