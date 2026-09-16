@@ -149,6 +149,29 @@ slides:
       datalayer decks serve my-deck.yaml
     caption: The CLI imports the YAML into an isolated temporary catalog and opens it directly.
 
+  - id: live
+    type: component
+    title: And when a slide needs a real component
+    subtitle: The spec names it, the host decides what the name means — so a YAML file can hold a live control without holding any code.
+    component: LiveAppearance
+    notes: |
+      The one slide in this deck that cannot be a picture of itself. On the
+      left is the appearance chooser from @datalayer/primer-addons, the
+      control the Datalayer header wears, bound to the same theme store; on
+      the right is SvgAgentsHomeHero from @datalayer/design, reading that
+      same store. Pick a theme and the drawing repaints while the room
+      watches. The frame around it will not: this deck is on the `datalayer`
+      template, whose colours are Primer's own tokens, and the standalone
+      shell re-applies those for the colour mode but not for the variant.
+      A deck on `datalayer-brand` — the Q2 review example — resolves its
+      colours from the palette in JavaScript and repaints end to end, which
+      is the better thing to show next if the question comes up.
+
+      The name `LiveAppearance` means something here because the app
+      registered it (app/src/App.tsx, registerDeckComponents); a host that
+      has not sees the engine's "unknown component" notice instead, and the
+      rest of the deck is unaffected.
+
   - id: finish
     type: closing
     title: Now tell your story

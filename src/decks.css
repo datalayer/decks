@@ -655,6 +655,21 @@ html.reveal-print .dla-deck {
   min-height: 0;
 }
 
+/*
+ * A column that holds a picture is the one column that must be told its own
+ * height. `align-items: start` above leaves every column the height of its
+ * content, which is what keeps headings level — but an image's content height
+ * is the image, so a tall capture in a column grows the column past the slide
+ * and out through the footer. Given a stretched column the figure's own
+ * `flex: 1 1 auto` and `max-height: 100%` finally have something to resolve
+ * against, and the picture fits. Scoped with `:has` so only columns with a
+ * figure in them change; text and bullet columns keep the alignment they had.
+ */
+.dla-deck .dla-columns > .dla-column:has(.dla-figure) {
+  align-self: stretch;
+  min-height: 0;
+}
+
 .dla-deck .dla-column-heading {
   font-size: 21px;
   font-weight: 650;

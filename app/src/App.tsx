@@ -17,7 +17,9 @@
  *
  * The example decks are registered here so a fresh `datalayer-decks` has
  * something to show before anyone has made a deck; what the backend holds is
- * pulled in by the plugin and shown beside them.
+ * pulled in by the plugin and shown beside them. Their components are
+ * registered in the same breath, since a spec may only name what the host
+ * has offered.
  */
 
 import React, { useEffect, useMemo, useRef } from 'react';
@@ -37,6 +39,7 @@ import {
   DecksHostProvider,
   deckId,
   printThemeFromAddress,
+  registerDeckComponents,
   registerDecks,
   resolveDeckRoute,
   resolveSlide,
@@ -48,10 +51,15 @@ import {
   openDeck,
   useDeckEntries,
 } from '@datalayer/decks/plugin';
-import { exampleDecks } from '../../examples';
+import { exampleDeckComponents, exampleDecks } from '../../examples';
 
 // Once, at module load: the list is complete on the first frame.
 registerDecks(exampleDecks);
+// And the components those decks name — the reference deck's `component`
+// slide, artifact visual and backdrop. The engine ships the registry empty
+// on purpose; this is the host filling it, which is the one line a host
+// copies to make its own components nameable from a spec.
+registerDeckComponents(exampleDeckComponents);
 
 const BACKEND_URL: string = __DECKS_BACKEND_URL__ || window.location.origin;
 

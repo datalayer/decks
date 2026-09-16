@@ -57,6 +57,7 @@
     "reveal.js": "^6.0.1"
   },
   "peerDependencies": {
+    "@datalayer/design": "^1.0.2",
     "@datalayer/primer-addons": "^1.0.20",
     "@datalayer/reactor": "^1.0.0",
     "@primer/octicons-react": ">=19.35.0",

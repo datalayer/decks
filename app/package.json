@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@datalayer/decks": "file:..",
+    "@datalayer/design": "^1.0.2",
     "@datalayer/primer-addons": "^1.0.20",
     "@datalayer/reactor": "file:../../reactor",
     "@datalayer/reactor-commands": "file:../../reactor/plugins/commands",
