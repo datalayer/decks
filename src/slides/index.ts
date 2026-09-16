@@ -16,6 +16,7 @@ import {
   TimelineSlide,
 } from './DataSlides';
 import { ArtifactSlide, CodeSlide, ImageSlide, LogosSlide } from './MediaSlides';
+import { MermaidSlide } from './MermaidSlide';
 import { BulletsSlide, QuoteSlide, StatementSlide } from './TextSlides';
 import { ClosingSlide, SectionSlide, TitleSlide } from './TitleSlides';
 
@@ -24,6 +25,7 @@ export * from './ColumnsSlide';
 export * from './ComponentSlide';
 export * from './DataSlides';
 export * from './MediaSlides';
+export * from './MermaidSlide';
 export * from './TextSlides';
 export * from './TitleSlides';
 
@@ -55,6 +57,7 @@ export const DEFAULT_LAYOUTS: Record<SlideType, SlideComponent> = {
   chart: ChartSlide,
   logos: LogosSlide,
   code: CodeSlide,
+  mermaid: MermaidSlide,
   component: ComponentSlide,
   closing: ClosingSlide,
 };

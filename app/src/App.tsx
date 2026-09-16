@@ -24,8 +24,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import {
   buildReactorFromPlugins,
   configurePlugin,
-  type LazyPluginRef,
-  type ReactorExtension,
 } from '@datalayer/reactor';
 import { ReactorSlot, useReactor } from '@datalayer/reactor/react';
 import { Box } from '@datalayer/primer-addons';
@@ -122,7 +120,7 @@ function useDeepLink(segments: string[]) {
   }, [entries, segments]);
 }
 
-function createReactor(remotes: (LazyPluginRef | ReactorExtension)[]) {
+function createReactor() {
   return buildReactorFromPlugins([
     // The decks *are* this application, so "none" is not a view of it: the
     // selector stays out of the header until an extension contributes a
@@ -136,26 +134,19 @@ function createReactor(remotes: (LazyPluginRef | ReactorExtension)[]) {
     // theme plugin above is its dependency, listed anyway so the portals
     // follow the mode even in a host that drops the menu.
     AppearancePlugin,
-    ...remotes,
   ]);
 }
 
-export default function App({ remotes = [] }: { remotes?: (LazyPluginRef | ReactorExtension)[] }) {
+export default function App() {
   const address = useMemo(readAddress, []);
   if (address.print) {
     return <PrintPage segments={address.segments} />;
   }
-  return <Shell remotes={remotes} segments={address.segments} />;
+  return <Shell segments={address.segments} />;
 }
 
-function Shell({
-  remotes,
-  segments,
-}: {
-  remotes: (LazyPluginRef | ReactorExtension)[];
-  segments: string[];
-}) {
-  const reactor = useMemo(() => createReactor(remotes), [remotes]);
+function Shell({ segments }: { segments: string[] }) {
+  const reactor = useMemo(createReactor, []);
   useReactor(reactor);
   useDeepLink(segments);
   return (

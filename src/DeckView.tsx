@@ -182,7 +182,7 @@ export const DeckView = ({
         }}
       >
         <Box>
-          <Heading as="h1" sx={{ fontSize: 4 }}>
+          <Heading as="h2" sx={{ fontSize: 4 }}>
             {spec.deck.title}
           </Heading>
           {spec.deck.subtitle && (

@@ -11,6 +11,7 @@ which package a feature ships in. On its own, ``datalayer-decks`` runs the
 same group.
 
     datalayer decks serve          # the API and the interface, one origin
+    datalayer decks serve talk.yaml  # load and open one YAML deck
     datalayer decks list           # what the store holds
     datalayer decks show <id>
     datalayer decks delete <id>
@@ -20,11 +21,14 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import tempfile
 import webbrowser
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
+import yaml
 from reactor import PluginManifest
 
 from .storage import DeckNotFound, DeckStore
@@ -36,14 +40,45 @@ app = typer.Typer(
 )
 
 DEFAULT_PORT = 8797
+_SLUG_CHARACTER = re.compile(r"[^a-z0-9._-]+")
 
 
 def _store(decks_dir: Optional[Path]) -> DeckStore:
     return DeckStore(decks_dir)
 
 
+def _load_deck(path: Path) -> dict[str, Any]:
+    """Read a YAML (or JSON, which is YAML) deck and reject obvious mistakes."""
+    try:
+        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as error:
+        raise ValueError(f"Could not read {path}: {error}") from error
+    if not isinstance(value, dict):
+        raise ValueError("A deck file must contain a mapping at its top level.")
+    metadata = value.get("deck")
+    if not isinstance(metadata, dict) or not metadata.get("title"):
+        raise ValueError("A deck file needs `deck.title`.")
+    if not isinstance(value.get("slides"), list) or not value["slides"]:
+        raise ValueError("A deck file needs a non-empty `slides` list.")
+    return value
+
+
+def _file_slug(path: Path) -> str:
+    """Turn a filename into the same conservative address the store accepts."""
+    slug = _SLUG_CHARACTER.sub("-", path.stem.lower()).strip("-._")
+    return (slug or "deck")[:64]
+
+
 @app.command()
 def serve(
+    deck: Optional[Path] = typer.Argument(
+        None,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+        help="A YAML deck to serve directly.",
+    ),
     port: int = typer.Option(DEFAULT_PORT, help="Port to listen on."),
     host: str = typer.Option("127.0.0.1", help="Interface to bind."),
     decks_dir: Optional[Path] = typer.Option(
@@ -53,7 +88,7 @@ def serve(
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open the interface in a browser."),
     reload: bool = typer.Option(False, "--reload", help="Reload on code changes (development)."),
 ) -> None:
-    """Serve the decks API and its interface from one origin."""
+    """Serve the decks API and interface, optionally opening one YAML deck."""
     from reactor.host import run_reactor_host
 
     from .host import create_app, ui_directory
@@ -68,17 +103,47 @@ def serve(
         )
         ui = False
 
-    application = create_app(with_ui=ui, decks_dir=decks_dir)
-    url = f"http://{host}:{port}/"
-    typer.secho(f"Datalayer Decks on {url}", fg=typer.colors.GREEN, err=True)
-    if open_browser and ui:
-        # Best effort, and only once the server is about to listen. A headless
-        # machine simply has no browser to open.
+    specification: dict[str, Any] | None = None
+    if deck is not None:
         try:
-            webbrowser.open(url)
-        except Exception:  # noqa: BLE001
-            pass
-    run_reactor_host(application, host=host, port=port, reload=reload)
+            specification = _load_deck(deck)
+        except ValueError as error:
+            raise typer.BadParameter(str(error), param_hint="DECK") from error
+
+    # A directly served file is copied to an ephemeral store unless the caller
+    # explicitly chose a persistent one. This keeps `serve talk.yaml` from
+    # quietly modifying ~/.datalayer/decks.
+    temporary: tempfile.TemporaryDirectory[str] | None = None
+    selected_dir = decks_dir
+    if specification is not None and selected_dir is None:
+        temporary = tempfile.TemporaryDirectory(prefix="datalayer-decks-")
+        selected_dir = Path(temporary.name)
+
+    old_directory = os.environ.get("DATALAYER_DECKS_DIR")
+    try:
+        if specification is not None:
+            assert selected_dir is not None
+            slug = _file_slug(deck)
+            DeckStore(selected_dir).put("local", slug, specification)
+        application = create_app(with_ui=ui, decks_dir=selected_dir)
+        path = f"decks/local/{slug}" if specification is not None else ""
+        url = f"http://{host}:{port}/{path}"
+        typer.secho(f"Datalayer Decks on {url}", fg=typer.colors.GREEN, err=True)
+        if open_browser and ui:
+            # Best effort, and only once the server is about to listen. A headless
+            # machine simply has no browser to open.
+            try:
+                webbrowser.open(url)
+            except Exception:  # noqa: BLE001
+                pass
+        run_reactor_host(application, host=host, port=port, reload=reload)
+    finally:
+        if old_directory is None:
+            os.environ.pop("DATALAYER_DECKS_DIR", None)
+        else:
+            os.environ["DATALAYER_DECKS_DIR"] = old_directory
+        if temporary is not None:
+            temporary.cleanup()
 
 
 @app.command("list")

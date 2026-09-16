@@ -52,6 +52,7 @@ export type SlideType =
   | 'chart'
   | 'logos'
   | 'code'
+  | 'mermaid'
   | 'component'
   | 'closing';
 
@@ -120,6 +121,7 @@ export type BlockSpec =
       lineNumbers?: boolean | string;
       caption?: string;
     }
+  | { type: 'mermaid'; diagram: string; caption?: string }
   | { type: 'metrics'; metrics: MetricSpec[] }
   | { type: 'component'; component: string; props?: Record<string, unknown> }
   /** Several blocks, one above the other — a picture and the words under it. */
@@ -321,6 +323,14 @@ export type CodeSlideSpec = SlideBase & {
   caption?: string;
 };
 
+/** A Mermaid diagram compiled to SVG in the browser. */
+export type MermaidSlideSpec = SlideBase & {
+  type: 'mermaid';
+  /** Mermaid source, such as `flowchart LR\n  A --> B`. */
+  diagram: string;
+  caption?: string;
+};
+
 /**
  * The escape hatch: an arbitrary React component, by name.
  *
@@ -359,6 +369,7 @@ export type SlideSpec =
   | ChartSlideSpec
   | LogosSlideSpec
   | CodeSlideSpec
+  | MermaidSlideSpec
   | ComponentSlideSpec
   | ClosingSlideSpec;
 

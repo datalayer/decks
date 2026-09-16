@@ -2,7 +2,7 @@
 #
 # Datalayer License
 
-"""The standalone host: one decks plugin, discovered, and its API on the same store."""
+"""The standalone host: only Decks, and its API on the same store."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ def test_the_plugin_is_registered_once_and_the_api_uses_its_store(tmp_path: Path
     app = create_app(with_ui=False, decks_dir=tmp_path)
     platform = app.state.reactor
     names = [record["name"] for record in platform.list_plugins()]
-    assert names.count("decks") == 1
+    assert names == ["decks"]
     client = TestClient(app)
     created = client.post(
         "/decks",
@@ -26,6 +26,8 @@ def test_the_plugin_is_registered_once_and_the_api_uses_its_store(tmp_path: Path
     assert created.status_code == 201
     assert (tmp_path / "t" / "one.json").is_file()
     assert [d["id"] for d in client.get("/decks").json()] == ["t/one"]
-    # The plugin the API answers for is the discovered one, over the same directory.
+    assert client.get("/plugins/frontend-extensions").json() == []
+    assert [record["name"] for record in platform.list_plugins()] == ["decks"]
+    # The plugin the API answers for is the registered one, over the same directory.
     plugin = platform.implementation_of("decks")
     assert plugin is not None and Path(plugin.store.directory) == tmp_path

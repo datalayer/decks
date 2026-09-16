@@ -41,23 +41,18 @@ def ui_directory() -> Path | None:
 def create_app(*, with_ui: bool = True, decks_dir: str | os.PathLike[str] | None = None) -> FastAPI:
     """One platform with the decks plugin, the API under ``/decks``, the UI at ``/``.
 
-    The decks plugin is not registered here by hand: this distribution
-    advertises it under the ``datalayer.reactor.extensions`` group, and the
-    host discovers it like any other installed extension — registering it
-    twice was a ``Plugin name already registered`` at every start. The router
-    is then built over the *discovered* plugin's store, so the API and the
-    plugin agree on where decks live. A checkout that is not installed (no
-    entry-point metadata) falls back to registering the plugin directly.
+    This is a product host, not the generic ``reactor`` host: it deliberately
+    registers only Decks. Globally discovering every installed extension here
+    made unrelated CMS and execution plugins start merely because they shared
+    the Python environment.
     """
-    if decks_dir is not None:
-        # The plugin reads this when the extension constructs it.
-        os.environ["DATALAYER_DECKS_DIR"] = str(decks_dir)
-    platform = PluginPlatform()
-    app = create_reactor_host(platform, title="Datalayer Decks", discover=True)
-    plugin = platform.implementation_of(DECKS_PLUGIN_MANIFEST.name)
-    if plugin is None:
-        plugin = DecksPlugin(DeckStore())
-        platform.register_plugin(DECKS_PLUGIN_MANIFEST, plugin)
+    # Even if a client calls `/plugins/frontend-extensions?refresh=true`, scan
+    # an application-private empty group rather than the global extension
+    # group shared by CMS, execution, and other installed products.
+    platform = PluginPlatform(extension_group="datalayer.decks.extensions")
+    plugin = DecksPlugin(DeckStore(decks_dir))
+    platform.register_plugin(DECKS_PLUGIN_MANIFEST, plugin)
+    app = create_reactor_host(platform, title="Datalayer Decks", discover=False)
     ui = ui_directory() if with_ui else None
     # The router knows the interface's index so a deck's address — and its
     # print view — opens the interface when a browser asks, and JSON otherwise.

@@ -16,6 +16,7 @@ dependencies = [
   "datalayer_reactor",
   "fastapi>=0.115.0",
   "pydantic>=2.8.0",
+  "PyYAML>=6.0",
   "typer>=0.12",
   "uvicorn>=0.30.0",
 ]

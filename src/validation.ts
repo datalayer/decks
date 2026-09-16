@@ -40,6 +40,7 @@ const REQUIRED: Partial<Record<SlideSpec['type'], string[]>> = {
   chart: ['series'],
   logos: ['logos'],
   code: ['code'],
+  mermaid: ['diagram'],
   component: ['component'],
   closing: ['title'],
 };

@@ -7,7 +7,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import * as Reactor from '@datalayer/reactor';
-import { bootstrapExtensions, setReactorSharedModules } from '@datalayer/reactor';
+import { setReactorSharedModules } from '@datalayer/reactor';
 import * as ReactorReact from '@datalayer/reactor/react';
 import { ThemedProvider, useThemeStore } from '@datalayer/primer-addons';
 import App from './App';
@@ -25,20 +25,17 @@ setReactorSharedModules({
   '@datalayer/reactor/react': ReactorReact,
 });
 
-async function main() {
-  // Anything pip-installed beside `datalayer-decks` joins the shell — the
-  // same round trip every Reactor host makes. An unreachable server costs the
-  // extensions, not the page.
-  const remotes = __DECKS_BACKEND_URL__
-    ? await bootstrapExtensions(__DECKS_BACKEND_URL__, { allowedOrigins: [__DECKS_BACKEND_URL__] })
-    : await bootstrapExtensions(window.location.origin);
+function main() {
+  // This is the standalone Decks product, whose plugins are bundled above.
+  // Generic extension discovery belongs to a generic Reactor host; doing it
+  // here started every unrelated extension installed in the Python environment.
   createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
       <ThemedProvider useStore={useThemeStore}>
-        <App remotes={remotes} />
+        <App />
       </ThemedProvider>
     </React.StrictMode>,
   );
 }
 
-void main();
+main();

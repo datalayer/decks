@@ -37,6 +37,9 @@ install: ## install the Python package in development mode
 serve: ## serve the decks API and the built interface (`datalayer decks serve`)
 	datalayer decks serve
 
+example: build-app ## build and serve the welcome deck
+	datalayer decks serve examples/welcome/welcome.yaml
+
 dev-app: ## the interface on :5190 against a server on :8797
 	npm run dev --prefix app
 
@@ -51,4 +54,3 @@ publish-pypi: # publish the pypi package
 	@exec echo twine upload ./dist/*-py3-none-any.whl
 	@exec echo
 	@exec echo https://pypi.org/project/datalayer-decks/#history
-

@@ -1,0 +1,157 @@
+# Copyright (c) 2022-2026 Datalayer, Inc.
+#
+# Datalayer License
+
+deck:
+  title: Welcome to Datalayer Decks
+  subtitle: One YAML file, many ways to tell the story
+  template: datalayer
+  transition: slide
+  footer:
+    note: Decks are data
+
+slides:
+  - id: welcome
+    type: title
+    title: Welcome to Datalayer Decks
+    subtitle: Presentations described as data, rendered as a polished story
+    meta: Run this deck with `make example`
+
+  - id: layouts
+    type: section
+    title: Start with intent
+    subtitle: Pick the semantic layout that matches what the slide needs to say.
+
+  - id: statement
+    type: statement
+    statement: The specification owns the content. The template owns the pixels.
+    attribution: Change one word to change the visual language of the whole deck.
+
+  - id: bullets
+    type: bullets
+    title: A focused list
+    subtitle: Bullets can arrive together or reveal one at a time.
+    icon: check
+    fragments: true
+    items:
+      - Write deck content in YAML or TypeScript
+      - Reuse semantic layouts across presentations
+      - Present, share, and print through Reveal.js
+
+  - id: columns
+    type: two-columns
+    title: Compose richer slides from blocks
+    layout: wide-right
+    left:
+      type: stack
+      heading: The specification
+      blocks:
+        - type: text
+          content: A column can hold text, bullets, metrics, code, images, components, or diagrams.
+        - type: metrics
+          metrics:
+            - value: "1"
+              label: portable source file
+            - value: "∞"
+              label: stories it can tell
+    right:
+      type: mermaid
+      heading: The rendering pipeline
+      diagram: |
+        flowchart LR
+          YAML[Deck YAML] --> V[Validation]
+          V --> T[Template]
+          T --> R[Reveal.js]
+
+  - id: metrics
+    type: metrics
+    title: Numbers get room to breathe
+    metrics:
+      - value: "20+"
+        label: semantic slide layouts
+        detail: From title to timeline
+      - value: "1"
+        label: portable specification
+        detail: Plain data, easy to version
+      - value: "0"
+        label: CSS rules in your YAML
+        detail: Templates handle presentation
+
+  - id: comparison
+    type: comparison
+    title: Separate content from presentation
+    columns:
+      - Hand-built slides
+      - Datalayer Decks
+    highlight: 1
+    rows:
+      - label: Content is portable
+        values: [false, true]
+      - label: Theme can change centrally
+        values: [false, true]
+      - label: Agent-friendly structured data
+        values: [false, true]
+
+  - id: timeline
+    type: timeline
+    title: From idea to audience
+    items:
+      - when: "01"
+        title: Outline
+        detail: Choose the story and its semantic layouts.
+      - when: "02"
+        title: Specify
+        detail: Write portable YAML content.
+      - when: "03"
+        title: Review
+        detail: Serve locally and refine in the browser.
+        current: true
+      - when: "04"
+        title: Present
+        detail: Share the URL or print to PDF.
+
+  - id: chart
+    type: chart
+    title: A chart without a charting dependency
+    subtitle: Use semantic bars when the shape of the comparison is the message.
+    max: 100
+    series:
+      - label: Writing content
+        value: 85
+        display: 85%
+      - label: Styling slides
+        value: 15
+        display: 15%
+      - label: Fighting layouts
+        value: 2
+        display: 2%
+    caption: Illustrative values—the welcome deck spends its time on the story.
+
+  - id: process
+    type: mermaid
+    title: Mermaid is a first-class slide
+    subtitle: Put Mermaid source directly in a deck specification.
+    diagram: |
+      sequenceDiagram
+        participant Author
+        participant CLI as datalayer decks serve
+        participant Deck as Deck renderer
+        Author->>CLI: welcome.yaml
+        CLI->>Deck: validated specification
+        Deck-->>Author: interactive presentation
+    caption: Mermaid also works as a block inside column and stack layouts.
+
+  - id: code
+    type: code
+    title: The command is deliberately small
+    language: bash
+    code: |
+      datalayer decks serve my-deck.yaml
+    caption: The CLI imports the YAML into an isolated temporary catalog and opens it directly.
+
+  - id: finish
+    type: closing
+    title: Now tell your story
+    subtitle: Copy this example, change the content, and keep the layouts.
+    cta: Run `make example` to begin.
+    contact: datalayer.io

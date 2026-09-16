@@ -76,7 +76,7 @@ export const DecksView = (): JSX.Element => {
           }}
         >
           <Box>
-            <Heading as="h1" sx={{ fontSize: 4 }}>
+            <Heading as="h2" sx={{ fontSize: 4 }}>
               Decks
             </Heading>
             <Text sx={{ color: 'fg.muted' }}>

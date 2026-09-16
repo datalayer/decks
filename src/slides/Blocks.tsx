@@ -4,8 +4,8 @@
  * Datalayer License
  */
 
-import type { JSX } from 'react';
-import type { ReactElement } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import type { JSX, ReactElement } from 'react';
 import { Code, Fragment } from '@revealjs/react';
 import { deckComponent } from '../registry/components';
 import { inline, paragraphs } from '../inline';
@@ -112,6 +112,91 @@ export const CodeBlock = ({
   </div>
 );
 
+type MermaidDiagramProps = { diagram: string; caption?: string };
+let mermaidRenderSequence = 0;
+
+/**
+ * Compile Mermaid source after the slide reaches the browser.
+ *
+ * Mermaid is loaded lazily: deck rendering remains safe in server-side and
+ * build-time contexts, while the generated SVG still becomes ordinary slide
+ * markup that Reveal can scale and print. `strict` is important here because
+ * diagram source may have arrived from a YAML file or an agent.
+ */
+export const MermaidDiagram = ({ diagram, caption }: MermaidDiagramProps): JSX.Element => {
+  const target = useRef<HTMLDivElement>(null);
+  const reactId = useId();
+  const [error, setError] = useState<string>();
+
+  useEffect(() => {
+    let active = true;
+    const element = target.current;
+    if (!element) {
+      return undefined;
+    }
+
+    element.replaceChildren();
+    setError(undefined);
+    const render = async (): Promise<void> => {
+      const { default: mermaid } = await import('mermaid');
+      const styles = getComputedStyle(element);
+      const token = (name: string, fallback: string): string =>
+        styles.getPropertyValue(name).trim() || fallback;
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: 'base',
+        fontFamily: token('--dla-deck-font', 'system-ui, sans-serif'),
+        themeVariables: {
+          background: token('--dla-deck-background', '#ffffff'),
+          primaryColor: token('--dla-deck-surface', '#f6f8fa'),
+          primaryTextColor: token('--dla-deck-foreground', '#1f2328'),
+          primaryBorderColor: token('--dla-deck-border', '#d0d7de'),
+          lineColor: token('--dla-deck-muted', '#59636e'),
+          secondaryColor: token('--dla-deck-accent-soft', '#ddf4ff'),
+          tertiaryColor: token('--dla-deck-background', '#ffffff'),
+        },
+      });
+      // StrictMode may start the effect twice before the first render settles;
+      // Mermaid uses this id for temporary DOM, so every attempt needs its own.
+      const id =
+        `dla-mermaid-${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}-` +
+        `${++mermaidRenderSequence}`;
+      const result = await mermaid.render(id, diagram);
+      if (!active || !target.current) {
+        return;
+      }
+      target.current.innerHTML = result.svg;
+      result.bindFunctions?.(target.current);
+    };
+
+    void render().catch((reason: unknown) => {
+      if (active) {
+        setError(reason instanceof Error ? reason.message : String(reason));
+      }
+    });
+    return () => {
+      active = false;
+      element.replaceChildren();
+    };
+  }, [diagram, reactId]);
+
+  return (
+    <figure className="dla-mermaid">
+      <div
+        ref={target}
+        className={`dla-mermaid-svg${error ? ' dla-mermaid-svg--hidden' : ''}`}
+        role="img"
+        aria-label="Diagram"
+      />
+      {error && (
+        <div className="dla-slide-error">Mermaid could not render this diagram: {error}</div>
+      )}
+      {caption && <figcaption>{inline(caption)}</figcaption>}
+    </figure>
+  );
+};
+
 /**
  * A component named by a spec, or a visible complaint that it does not exist.
  *
@@ -161,6 +246,8 @@ export const Block = ({
           caption={block.caption}
         />
       );
+    case 'mermaid':
+      return <MermaidDiagram diagram={block.diagram} caption={block.caption} />;
     case 'image':
       return (
         <figure className={`dla-figure${block.fit === 'cover' ? ' dla-figure--cover' : ''}`}>

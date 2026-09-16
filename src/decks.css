@@ -1429,6 +1429,52 @@ html.reveal-print .dla-deck {
   color: var(--dla-deck-muted);
 }
 
+/* --- Mermaid diagrams --------------------------------------------------------------- */
+
+.dla-deck .dla-mermaid {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+}
+
+.dla-deck .dla-mermaid-svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 280px;
+}
+
+.dla-deck .dla-mermaid-svg:empty::after {
+  content: 'Rendering diagram\2026';
+  color: var(--dla-deck-muted);
+  font-size: 18px;
+}
+
+.dla-deck .dla-mermaid-svg--hidden {
+  display: none;
+}
+
+.dla-deck .dla-mermaid-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+  margin: 0 auto;
+}
+
+.dla-deck .dla-mermaid figcaption {
+  color: var(--dla-deck-muted);
+  font-size: 17px;
+  line-height: 1.4;
+}
+
 /*
  * Syntax highlighting, in the deck's own colours.
  *

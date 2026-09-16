@@ -153,7 +153,7 @@ const Gate = ({
     >
       {icon}
     </Box>
-    <Heading as="h1" sx={{ fontSize: 3 }}>
+    <Heading as="h2" sx={{ fontSize: 3 }}>
       {heading}
     </Heading>
     {children}

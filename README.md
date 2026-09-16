@@ -24,6 +24,7 @@ and a dark projection deck by changing one word.
 ```bash
 pip install datalayer_decks
 datalayer decks serve          # http://127.0.0.1:8797, opens the browser
+datalayer decks serve my-deck.yaml  # load YAML and open this deck directly
 datalayer decks list
 ```
 
@@ -37,6 +38,20 @@ palette, and — at the header's right edge — the appearance menu of
 `@datalayer/primer-addons`, the color mode and theme chooser the Datalayer
 header wears. Set `DATALAYER_DECKS_DIR` (or `--decks-dir`) to choose where
 decks are stored (`~/.datalayer/decks` otherwise).
+
+A YAML file passed to `serve` is loaded into a temporary store and opened at
+its deck URL, so trying a file does not alter the user's normal deck catalog.
+Pass `--decks-dir` as well when the imported copy should persist. A diagram is
+ordinary spec content, either as a full slide or inside a column:
+
+```yaml
+- type: mermaid
+  title: From specification to screen
+  diagram: |
+    flowchart LR
+      YAML[Deck YAML] --> Validate
+      Validate --> Reveal[Reveal.js]
+```
 
 Installed beside any other Reactor host, the same wheel publishes itself as an
 extension: the routes join that host, and the Decks plugin — built by
@@ -109,6 +124,7 @@ make build-extension  # the container → share/datalayer/reactor/extensions/dec
 make wheel            # both, then the wheel (hatch_build.py builds what is missing)
 make test
 make dev-app          # Rsbuild on :5190, against `datalayer decks serve` on :8797
+make example          # serve examples/welcome/welcome.yaml directly
 ```
 
 The container build needs `@module-federation/rsbuild-plugin` (a

@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 
 import typer
+from fastapi.testclient import TestClient
 from typer.testing import CliRunner
 
 from datalayer_decks.cli import app, plugin
@@ -43,3 +44,27 @@ def test_the_plugin_adds_the_group_to_a_host_cli() -> None:
     assert result.exit_code == 0
     for command in ("serve", "list", "show", "delete"):
         assert command in result.output
+
+
+def test_serve_loads_a_yaml_file_and_opens_its_deep_link(
+    tmp_path: Path, monkeypatch: object
+) -> None:
+    deck = tmp_path / "My Welcome.yaml"
+    deck.write_text(
+        """deck:\n  title: Welcome\n  template: datalayer\nslides:\n  - type: title\n    title: Hello\n"""
+    )
+    captured: dict[str, object] = {}
+
+    def run(application: object, **options: object) -> None:
+        captured["decks"] = TestClient(application).get("/decks").json()
+        captured["options"] = options
+
+    monkeypatch.setattr("reactor.host.run_reactor_host", run)
+    result = runner.invoke(app, ["serve", str(deck), "--no-ui", "--no-open"])
+
+    assert result.exit_code == 0, result.output
+    records = captured["decks"]
+    assert isinstance(records, list)
+    assert records[0]["id"] == "local/my-welcome"
+    assert records[0]["spec"]["deck"]["title"] == "Welcome"
+    assert "http://127.0.0.1:8797/decks/local/my-welcome" in result.output

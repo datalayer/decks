@@ -27,6 +27,9 @@ import { pluginModuleFederation } from '@module-federation/rsbuild-plugin';
 const singleton = { singleton: true } as const;
 
 export default defineConfig({
+  // This config is invoked from the package root (`rsbuild -c extension/...`).
+  // Anchor relative entries and output paths to the config directory.
+  root: import.meta.dirname,
   plugins: [
     pluginReact(),
     pluginModuleFederation({
