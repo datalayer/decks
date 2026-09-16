@@ -137,10 +137,10 @@ const frame: React.CSSProperties = {
 
   height: '420px',
   overflow: 'auto',
-  padding: '16px 20px',
-  border: '1px solid var(--dla-deck-border)',
-  borderRadius: '14px',
-  background: 'var(--dla-deck-surface)',
+  // No box of its own. Until the cell has run there is nothing under the
+  // code, and a painted 420px frame made that nothing a green slab two thirds
+  // empty; unpainted, the space is just the slide, the editor sits on it the
+  // way a code slide's block does, and the output arrives beneath.
 };
 
 const waiting: React.CSSProperties = {
@@ -189,6 +189,12 @@ const CellWithKernel = ({ accent, style }: { accent: string; style: string }): J
     <JupyterReactTheme
       colormode={colorMode === 'auto' ? systemMode : colorMode}
       useBaseStyles={false}
+      // The theme paints its wrapper `var(--bgColor-default)` — the page
+      // canvas — at the height Lumino first measured. The prompt column is
+      // transparent, so that showed through it as a black rectangle ending
+      // mid-cell, while the editor (painted in the deck's tokens) went on
+      // past it. Nothing on this slide should wear the page's colour.
+      backgroundColor="transparent"
     >
       {defaultKernel ? (
         <Cell id="deck-pyodide-cell" source={sourceFor(accent, style)} kernel={defaultKernel} />

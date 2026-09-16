@@ -22,7 +22,7 @@
  * has offered.
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   buildReactorFromPlugins,
   configurePlugin,
@@ -38,6 +38,7 @@ import {
   DeckPrintView,
   DecksHostProvider,
   deckId,
+  deckPath,
   printThemeFromAddress,
   registerDeckComponents,
   registerDecks,
@@ -46,10 +47,13 @@ import {
 } from '@datalayer/decks';
 import {
   DecksPlugin,
+  closeDeck,
   configureDecksBackend,
   loadDecksFromBackend,
   openDeck,
   useDeckEntries,
+  useDecksState,
+  useOpenDeck,
 } from '@datalayer/decks/plugin';
 import { exampleDecks } from '../../examples';
 import { appDeckComponents } from './deckComponents';
@@ -113,21 +117,85 @@ function PrintPage({ segments }: { segments: string[] }) {
   );
 }
 
-/** Open the deck the address names once the catalog has it. */
-function useDeepLink(segments: string[]) {
+/** Put a path in the bar without navigating, and only when it changed. */
+function replacePath(path: string): void {
+  const current = window.location.pathname + window.location.search;
+  const next = path + window.location.search;
+  if (current !== next) {
+    window.history.replaceState(window.history.state, '', next);
+  }
+}
+
+/**
+ * The address bar and the open deck, kept in step, both ways.
+ *
+ * Reading, `/decks/<id>[/<slide>]` opens that deck there — at load, once the
+ * catalog has the deck (the server's arrive after the first paint), and again
+ * on `popstate`, for a reader who goes back or edits the address by hand.
+ *
+ * Writing, every move through the deck puts the slide it landed on in the
+ * bar, so what is in the address is always a link to what is on screen —
+ * which is the whole point: a slide worth pointing at is worth being able to
+ * copy the URL of. Reveal's own `hash` and `history` are off for this reason
+ * (`DeckRenderer`): the address is the host's to write, and this is the host.
+ *
+ * Replaced rather than pushed. Arrowing through a twenty-slide deck should
+ * not bury the page the reader came from under twenty history entries; Back
+ * leaves the deck, as it did before there was a slide in the address.
+ *
+ * The writer stays quiet until something has been opened from here, because
+ * at first paint `selected` is empty while a deep link is still waiting for
+ * its deck to load — and a writer that spoke then would replace the very
+ * address it is waiting on with a bare `/decks`.
+ */
+function useAddressBar(): void {
   const entries = useDeckEntries();
-  const done = useRef(false);
-  useEffect(() => {
-    if (done.current || segments.length === 0) {
-      return;
-    }
+  const open = useOpenDeck();
+  const { slide } = useDecksState();
+  const resolved = useRef(false);
+  const wrote = useRef(false);
+
+  const apply = useCallback((): void => {
+    const { segments } = readAddress();
     const [first, second, third] = segments;
     const { entry, slideSegment } = resolveDeckRoute(first, second, third);
     if (entry) {
-      done.current = true;
+      resolved.current = true;
       openDeck(deckId(entry), resolveSlide(slideSegment, entry.spec.slides.length));
+    } else if (segments.length === 0 && wrote.current) {
+      // Back, to a `/decks` this hook wrote when the deck was closed.
+      resolved.current = true;
+      closeDeck();
     }
-  }, [entries, segments]);
+  }, []);
+
+  // Read: at load, retried as decks arrive, until the address resolves.
+  useEffect(() => {
+    if (!resolved.current) {
+      apply();
+    }
+  }, [apply, entries]);
+
+  // Read: and whenever the reader moves through their own history.
+  useEffect(() => {
+    window.addEventListener('popstate', apply);
+    return () => window.removeEventListener('popstate', apply);
+  }, [apply]);
+
+  // Write: the open deck and slide, as the address for them.
+  useEffect(() => {
+    if (open) {
+      wrote.current = true;
+      replacePath(deckPath(open, slide));
+    } else if (wrote.current) {
+      // The root, and not `/decks`: that address belongs to the API on this
+      // host — it answers the deck list as JSON, whatever the browser asked
+      // for (`datalayer_decks/api.py`) — so a reader who closed a deck and
+      // reloaded would get a page of JSON. `/` is where the interface is
+      // mounted, and it opens on the list.
+      replacePath('/');
+    }
+  }, [open, slide]);
 }
 
 function createReactor() {
@@ -152,13 +220,13 @@ export default function App() {
   if (address.print) {
     return <PrintPage segments={address.segments} />;
   }
-  return <Shell segments={address.segments} />;
+  return <Shell />;
 }
 
-function Shell({ segments }: { segments: string[] }) {
+function Shell() {
   const reactor = useMemo(createReactor, []);
   useReactor(reactor);
-  useDeepLink(segments);
+  useAddressBar();
   return (
     <DecksHostProvider host={{}}>
       <ReactorSlot slot="root" />
