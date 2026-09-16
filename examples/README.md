@@ -9,7 +9,7 @@ Decks written as data, to show the slide library rather than any product:
 | `src/examples/everyLayout.ts` | **every** semantic slide type, one slide each — including the live-component slide, the component artifact visual and the component backdrop |
 | `src/examples/reactorInFiveSlides.ts` | title, bullets with inline markup, two columns, code, statement |
 | `src/examples/quarterlyReview.ts` | metrics, chart, timeline, comparison, section, fragments |
-| `examples/welcome/welcome.yaml` | the file-based CLI flow, Mermaid slides and blocks, and the principal semantic layouts |
+| `examples/welcome/welcome.yaml` | the file-based CLI flow, Mermaid slides and blocks, the principal semantic layouts, and two live components — the appearance chooser and a Jupyter cell on a Pyodide kernel |
 
 `everyLayout` is the reference deck: `src/__tests__/examples.test.ts` asserts it
 covers `SLIDE_TYPES` exactly, so a slide type added to the library and not to
@@ -53,4 +53,13 @@ registerDeckComponents(exampleDeckComponents);
 Register the decks without the components and nothing breaks: the three slides
 that name one show the engine's "unknown component" notice instead. Do register
 them and the `component` slide is a live control — pick a theme on the slide and
-the deck, the drawing beside it and the shell around all three follow.
+the drawing beside it repaints, reading the same store.
+
+The welcome deck names one more, `JupyterPyodideCell`, which the **app**
+registers rather than the package (`app/src/deckComponents.tsx`): a Jupyter cell
+whose kernel is Pyodide, running Python in the tab with no server behind it.
+It lives there because JupyterLab, Lumino and CodeMirror are a fair thing for a
+Jupyter host to carry and an unfair thing to put in a deck engine — which is the
+registry's whole point: the spec names a capability, and each host decides what
+it can offer. It loads lazily and only once its slide is on screen, so a reader
+who stops at slide three never downloads Pyodide.

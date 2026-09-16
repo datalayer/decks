@@ -17,7 +17,7 @@
  * default port in development, where Rsbuild is here and uvicorn is there.
  */
 
-import { defineConfig } from '@rsbuild/core';
+import { defineConfig, rspack } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginStyledComponents } from '@rsbuild/plugin-styled-components';
 import path from 'node:path';
@@ -34,6 +34,42 @@ export default defineConfig({
     },
   },
   html: { title: 'Datalayer Decks' },
+  tools: {
+    /*
+     * JupyterLab's dependency tree reads `process.env` in the browser —
+     * Lezer's parser does `typeof process < 'u' && process.env.LOG`, and the
+     * mocked `process` rspack supplies has no `env`, so the whole bundle died
+     * on "Cannot read properties of undefined (reading 'LOG')" before the
+     * first slide rendered. The landing application, which carries the same
+     * jupyter-react stack, shims it the same way (`webpack.config.js`:
+     * `ProvidePlugin({ process: 'process/browser' })`), so this is that
+     * configuration rather than a new guess.
+     */
+    rspack: {
+      plugins: [new rspack.ProvidePlugin({ process: 'process/browser' })],
+    },
+    /*
+     * What JupyterLab needs from a bundler, for the one slide that runs a
+     * Jupyter cell (`src/JupyterCellSlide.tsx`).
+     *
+     * `@jupyterlab/apputils-extension` imports `scrollbar.raw.css` for its
+     * *text*, to inject as a stylesheet at runtime — so that one file has to
+     * arrive as a string rather than be swallowed by the CSS pipeline, which
+     * would leave the import with no default export (the error is
+     * `'default' ... was not found in '../style/scrollbar.raw.css'`). The
+     * Vite examples in jupyter-react solve the same problem with a plugin
+     * that rewrites the specifier to `?raw`; the equivalent here is excluding
+     * the extension from the CSS rule and giving it `asset/source`.
+     *
+     * `.whl` is the other Jupyter-shaped file: piplite ships Python wheels the
+     * Pyodide kernel fetches, and they are assets, not modules.
+     */
+    bundlerChain(chain, { CHAIN_ID }) {
+      chain.module.rule(CHAIN_ID.RULE.CSS).exclude.add(/\.raw\.css$/);
+      chain.module.rule('raw-css').test(/\.raw\.css$/).type('asset/source');
+      chain.module.rule('wheel').test(/\.whl$/).type('asset/resource');
+    },
+  },
   resolve: {
     // The app declares Reactor as a sibling `file:` dependency. Bundle its
     // TypeScript entry points directly so a monorepo link and a plain checkout

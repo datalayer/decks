@@ -51,15 +51,17 @@ import {
   openDeck,
   useDeckEntries,
 } from '@datalayer/decks/plugin';
-import { exampleDeckComponents, exampleDecks } from '../../examples';
+import { exampleDecks } from '../../examples';
+import { appDeckComponents } from './deckComponents';
 
 // Once, at module load: the list is complete on the first frame.
 registerDecks(exampleDecks);
 // And the components those decks name — the reference deck's `component`
-// slide, artifact visual and backdrop. The engine ships the registry empty
-// on purpose; this is the host filling it, which is the one line a host
-// copies to make its own components nameable from a spec.
-registerDeckComponents(exampleDeckComponents);
+// slide, artifact visual and backdrop, plus this host's own live Jupyter
+// cell. The engine ships the registry empty on purpose; this is the host
+// filling it, which is the one line a host copies to make its own components
+// nameable from a spec.
+registerDeckComponents(appDeckComponents);
 
 const BACKEND_URL: string = __DECKS_BACKEND_URL__ || window.location.origin;
 

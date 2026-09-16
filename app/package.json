@@ -12,6 +12,7 @@
   "dependencies": {
     "@datalayer/decks": "file:..",
     "@datalayer/design": "^1.0.2",
+    "@datalayer/jupyter-react": "^2.0.14",
     "@datalayer/primer-addons": "^1.0.20",
     "@datalayer/reactor": "file:../../reactor",
     "@datalayer/reactor-commands": "file:../../reactor/plugins/commands",
@@ -29,6 +30,7 @@
     "@rsbuild/plugin-styled-components": "^1.7.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "process": "^0.11.10",
     "typescript": "5.9.3"
   }
 }

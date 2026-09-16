@@ -172,6 +172,47 @@ slides:
       has not sees the engine's "unknown component" notice instead, and the
       rest of the deck is unaffected.
 
+  - id: pyodide
+    type: component
+    title: And when the slide needs to run code
+    subtitle: A Jupyter cell on a Pyodide kernel — Python running in this tab, with no server behind it.
+    component: JupyterPyodideCell
+    notes: |
+      The cell runs itself: the kernel starts when the slide is first shown,
+      `Cell` auto-starts, and the plot lands about fifteen seconds later.
+      Fifteen, not five, because the cell installs matplotlib on the way:
+      `%pip install` is piplite, fetching the wheel into the browser. Say what
+      is happening while it works — `useJupyter({ lite: true })` builds a
+      JupyterLite service manager whose kernel is Pyodide, jupyter-react
+      carries the kernel extension, the Pyodide runtime comes from the
+      jsDelivr CDN, and matplotlib comes from PyPI. The room needs the
+      network, and a cold cache costs longer than a warm one. Nothing is
+      deployed to run any of it: there is no Jupyter server behind this slide.
+
+      The figure is drawn in the deck's own accent, and the cell in the deck's
+      own tokens — JupyterLab's palette is mapped onto the template's in
+      app/src/JupyterCellSlide.tsx, because a cell in JupyterLab's greys on a
+      Matrix-dark slide is two palettes in one box. The colours are read from
+      the deck when the slide starts, so a theme picked *after* that leaves
+      the figure as it was drawn; step back and reload to redraw it.
+
+      Reveal keeps every slide of a deck mounted at once, so the kernel is
+      deliberately held back until this slide is on screen (an
+      IntersectionObserver in app/src/JupyterCellSlide.tsx). Otherwise opening
+      the deck at slide one downloaded Pyodide for a reader who never came
+      this far. Until then the slide says so rather than pretending to be
+      busy.
+
+      Which is also the point worth making out loud. The previous slide showed
+      a spec naming a control; this one shows the same mechanism carrying a
+      whole runtime, and the deck did not have to learn what a kernel is.
+      `JupyterPyodideCell` is registered by this application rather than by
+      `@datalayer/decks/examples` (app/src/deckComponents.tsx): JupyterLab,
+      Lumino and CodeMirror are a fair thing for a Jupyter host to carry and
+      an unfair thing to put in a deck engine, so the host offers the name and
+      the spec stays a few lines of YAML. In another host the slide shows the
+      engine's "unknown component" notice, and the rest of the deck is fine.
+
   - id: finish
     type: closing
     title: Now tell your story
