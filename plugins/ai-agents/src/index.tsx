@@ -74,6 +74,12 @@ export type DecksAiAgentsPluginConfig = {
    * default — the Datalayer cloud — which is where a temporary key comes from.
    */
   inferenceUrl?: string;
+  /**
+   * What the host adds to the agentspec's prompt: the page it is on, and what
+   * is different there — one deck already open, a save that is explicit. The
+   * spec says what the agent is; this says where it is.
+   */
+  instructions?: string;
 };
 
 export const DecksAiAgentsPlugin = definePlugin<
@@ -92,6 +98,7 @@ export const DecksAiAgentsPlugin = definePlugin<
     slot: 'root',
     agentId: DEFAULT_AGENT_ID,
     inferenceUrl: undefined,
+    instructions: undefined,
   },
   build: ({ config }) => {
     // Always, and before the first render: the harness's hook reads the store
@@ -103,7 +110,7 @@ export const DecksAiAgentsPlugin = definePlugin<
       .setConfiguration({ aiInferenceUrl: config.inferenceUrl || DEFAULT_INFERENCE_URL });
     const Agent = (): JSX.Element => (
       <Suspense fallback={null}>
-        <DecksAgent agentId={config.agentId} />
+        <DecksAgent agentId={config.agentId} instructions={config.instructions} />
       </Suspense>
     );
     return {

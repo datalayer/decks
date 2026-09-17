@@ -31,9 +31,11 @@ import { useAgentCommandTools } from '@datalayer/agent-runtimes/lib/tools/adapte
 export type DecksAgentProps = {
   /** The agentspec to build the chat from. */
   agentId: string;
+  /** The host's addendum to the spec's prompt, if it has one. */
+  instructions?: string;
 };
 
-export function DecksAgent({ agentId }: DecksAgentProps): JSX.Element {
+export function DecksAgent({ agentId, instructions }: DecksAgentProps): JSX.Element {
   const spec = useMemo(() => getAgentspecs(agentId), [agentId]);
   const { inference, anonymous, needsSignIn } = useBrowserInference(true);
   // Every command the plugins on this page offer an agent — the decks
@@ -46,13 +48,13 @@ export function DecksAgent({ agentId }: DecksAgentProps): JSX.Element {
       spec
         ? browserProtocolConfig({
             agentId: spec.id,
-            instructions: spec.systemPrompt,
+            instructions: [spec.systemPrompt, instructions].filter(Boolean).join('\n\n'),
             model: spec.model,
             frontendTools: tools,
             inference,
           })
         : undefined,
-    [inference, spec, tools],
+    [inference, instructions, spec, tools],
   );
   const suggestions = useMemo(
     () =>

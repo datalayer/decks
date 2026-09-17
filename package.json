@@ -38,18 +38,18 @@
     "presentations"
   ],
   "scripts": {
-    "clean": "rm -rf lib",
-    "prebuild": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs",
-    "build": "tsc -p tsconfig.json",
-    "build:lib": "tsc -p tsconfig.json",
-    "typecheck": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs && tsc -p tsconfig.typecheck.json",
-    "test": "vitest run",
-    "app:dev": "npm run dev --prefix app",
     "app:build": "npm run build --prefix app",
-    "watch:lib": "tsc -w -p tsconfig.json",
+    "app:dev": "npm run dev --prefix app",
+    "build": "tsc -p tsconfig.json",
+    "build:all": "npm run build && npm run app:build && npm run extension:build",
+    "build:lib": "tsc -p tsconfig.json",
+    "clean": "rm -rf lib",
     "extension:build": "rsbuild build -c extension/rsbuild.config.ts",
     "extension:dev": "rsbuild dev -c extension/rsbuild.config.ts",
-    "build:all": "npm run build && npm run app:build && npm run extension:build"
+    "prebuild": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs",
+    "test": "vitest run",
+    "typecheck": "node scripts/css-to-ts.mjs && node scripts/agent-tools-json.mjs && tsc -p tsconfig.typecheck.json",
+    "watch:lib": "tsc -w -p tsconfig.json"
   },
   "dependencies": {
     "@revealjs/react": "^0.2.1",
