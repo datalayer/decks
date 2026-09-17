@@ -1,7 +1,7 @@
 {
   "name": "@datalayer/decks-plugin-ai-agents",
   "version": "1.0.0",
-  "description": "An AI agent beside the decks: the Pitcher, on a temporary inference key, driving the decks plugin's own commands as its tools.",
+  "description": "An AI agent beside the decks — the reference Decks agent, or one a host names — on a temporary inference key, driving the decks plugin's own commands as its tools.",
   "license": "Datalayer License",
   "type": "module",
   "main": "lib/index.js",

@@ -199,6 +199,28 @@ def test_the_last_slide_is_kept_and_the_deck_deleted_instead(platform) -> None:
         run(platform, "decks.deleteDeck", {"id": "local/talk"})
 
 
+def test_the_slide_tools_read_and_append_on_a_named_deck(platform) -> None:
+    listed = run(platform, "decks.listSlides", {"id": "local/talk"})
+    assert listed == {
+        "id": "local/talk",
+        "title": "A talk",
+        "slides": [
+            {"slide": 1, "type": "title", "title": "A talk"},
+            {"slide": 2, "type": "bullets", "title": "Why"},
+        ],
+    }
+    one = run(platform, "decks.getSlide", {"id": "local/talk", "slide": 2})
+    assert one == {"id": "local/talk", "slide": 2, "slide_spec": {"type": "bullets", "title": "Why", "items": ["a", "b"]}}
+
+    added = run(platform, "decks.addSlide", {"id": "local/talk", "slide_spec": {"type": "closing", "title": "Bye"}})
+    assert (added["slide"], added["slides"], added["issues"]) == (3, 3, [])
+    assert run(platform, "decks.getDeck", {"id": "local/talk"})["spec"]["slides"][2] == {"type": "closing", "title": "Bye"}
+
+    # In the browser these default to the open deck; a store has none, and says so.
+    with pytest.raises(ValueError, match="no open deck on a server"):
+        run(platform, "decks.listSlides", {})
+
+
 # -- The answer shapes, on their own -------------------------------------------
 
 

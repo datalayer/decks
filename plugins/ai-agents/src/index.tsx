@@ -9,8 +9,10 @@
  *
  * A frontend plugin for a Reactor host that already mounts
  * `@datalayer/decks/plugin`. It adds one thing: a floating chat, in the
- * host's root slot, with the **Pitcher** in it — the `worker-pitcher`
- * agentspec, the deck agent tailored to pitch decks.
+ * host's root slot, with the **Decks agent** in it — the `example-decks`
+ * agentspec, the reference deck agent. A host may name another through
+ * `agentId`; the landing's deck editor runs `worker-pitcher`, the same agent
+ * with a pitch-deck trade, on the same tools.
  *
  * It declares no tools of its own. The decks plugin contributes its commands
  * to the reactor's `AgentTools` point — list, read, create, replace, edit a
@@ -42,12 +44,16 @@ import { coreStore } from '@datalayer/agent-runtimes/lib/state/index.js';
 
 // The chat and the harness are the heavy half of the page; they arrive when
 // the plugin is on, not with the host's first bytes.
-const PitcherAgent = lazy(() => import('./PitcherAgent'));
+const DecksAgent = lazy(() => import('./DecksAgent'));
 
 export const DECKS_AI_AGENTS_PLUGIN_NAME = '@datalayer/decks-plugin-ai-agents';
 
-/** The agentspec the chat is built from, unless the host names another. */
-export const DEFAULT_AGENT_ID = 'worker-pitcher';
+/**
+ * The agentspec the chat is built from, unless the host names another:
+ * the reference deck agent. `worker-pitcher` is its pitch-deck sibling and
+ * names the same frontend toolset (`frontend-tools/decks.yaml`).
+ */
+export const DEFAULT_AGENT_ID = 'example-decks';
 
 export type DecksAiAgentsPluginConfig = {
   /** Where the chat renders; a slot the host renders once, at the root. */
@@ -70,9 +76,9 @@ export const DecksAiAgentsPlugin = definePlugin<
   version: '1.0.0',
   displayName: 'AI Agents',
   description:
-    'The Pitcher beside the decks: writes and drives a deck through the decks commands, on a temporary AI key.',
-  octicon: 'rocket',
-  emoji: '\u{1F680}',
+    'An agent beside the decks: writes and drives a deck through the decks commands, on a temporary AI key.',
+  octicon: 'project',
+  emoji: '\u{1F5BC}\uFE0F',
   config: {
     slot: 'root',
     agentId: DEFAULT_AGENT_ID,
@@ -86,7 +92,7 @@ export const DecksAiAgentsPlugin = definePlugin<
     }
     const Agent = (): JSX.Element => (
       <Suspense fallback={null}>
-        <PitcherAgent agentId={config.agentId} />
+        <DecksAgent agentId={config.agentId} />
       </Suspense>
     );
     return {

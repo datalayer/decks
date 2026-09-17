@@ -42,6 +42,7 @@ import { deckById, deckId, listDecks } from '../registry/catalog';
 import type { DeckSpec, SlideSpec } from '../types';
 import {
   deckDetails,
+  deckOutline,
   deckSummary,
   describeWrite,
   existingDeck,
@@ -73,6 +74,37 @@ import {
   replaceDeck,
   updateSlide,
 } from './store';
+
+/**
+ * The deck an argument names, else the open one.
+ *
+ * The slide tools are what an agent sitting beside an open deck reaches for
+ * — "add a closing slide", "what is on slide 3" — and asking it for an id it
+ * would first have to look up is the wrong question. The other data tools
+ * keep asking: a create or a delete should say which deck it means.
+ */
+const idOrOpen = (argument: { id?: unknown } | undefined): string => {
+  const named = textOf(argument?.id);
+  if (named) {
+    return named;
+  }
+  const open = getDecksState().selected;
+  if (!open) {
+    throw new Error('Which deck? Open one, or pass its `id` as listed by decks_list_decks.');
+  }
+  return open;
+};
+
+/** A 1-based slide number the deck has, or a sentence saying it does not. */
+const existingSlideNumber = (slide: number, count: number): number => {
+  if (count === 0) {
+    throw new Error('The deck has no slides yet.');
+  }
+  if (!Number.isInteger(slide) || slide < 1 || slide > count) {
+    throw new Error(`The deck has slides 1 to ${count}; there is no slide ${slide}.`);
+  }
+  return slide;
+};
 
 /** What a screen command answers: it ran, or why it could not. */
 type Outcome = {
@@ -379,6 +411,57 @@ export const DecksPlugin = definePlugin<DecksPluginConfig, unknown, ReactorReact
         category: 'Decks',
         execute: async (argument) =>
           describeWrite(await deleteSlide(idOf(argument), slideOf(argument))),
+      }),
+      /*
+       * The slide tools: on the open deck unless told otherwise, answering
+       * with the least that serves — an outline, one slide, the deck after
+       * an append — so an agent beside a deck can work it without a lookup.
+       */
+      registerCommand<
+        { id?: string } | undefined,
+        { id: string; title: string; slides: ReturnType<typeof deckOutline> }
+      >({
+        id: DECKS_DATA_COMMANDS.listSlides,
+        name: 'List the slides',
+        description: 'The slides of the open deck (or the one named): number, type, title',
+        category: 'Decks',
+        execute: (argument) => {
+          const entry = existingDeck(idOrOpen(argument));
+          return { id: deckId(entry), title: entry.spec.deck.title, slides: deckOutline(entry.spec) };
+        },
+      }),
+      registerCommand<
+        { id?: string; slide: number } | undefined,
+        { id: string; slide: number; slide_spec: SlideSpec }
+      >({
+        id: DECKS_DATA_COMMANDS.getSlide,
+        name: 'Read a slide',
+        description: 'One slide of the open deck (or the one named), by its 1-based number',
+        category: 'Decks',
+        execute: (argument) => {
+          const entry = existingDeck(idOrOpen(argument));
+          const slide = existingSlideNumber(slideOf(argument), entry.spec.slides.length);
+          return { id: deckId(entry), slide, slide_spec: entry.spec.slides[slide - 1] };
+        },
+      }),
+      registerCommand<
+        { id?: string; slide_spec: SlideSpec } | undefined,
+        DeckWritten & { slide: number }
+      >({
+        id: DECKS_DATA_COMMANDS.addSlide,
+        name: 'Add a slide',
+        description: 'Append a slide at the end of the open deck (or the one named), and show it',
+        category: 'Decks',
+        execute: async (argument) => {
+          const id = idOrOpen(argument);
+          // Past the end appends; `insertSlide` clamps the position.
+          const result = await insertSlide(
+            id,
+            Number.MAX_SAFE_INTEGER,
+            argument?.slide_spec as SlideSpec,
+          );
+          return { ...describeWrite(result), slide: result.entry.spec.slides.length };
+        },
       }),
       registerCommand<{ id: string } | undefined, { ok: true; id: string }>({
         id: DECKS_DATA_COMMANDS.deleteDeck,

@@ -5,7 +5,7 @@
  */
 
 /**
- * The chat, with the Pitcher in it.
+ * The chat, with the deck agent in it.
  *
  * Loaded lazily by the plugin entry: this is where agent-runtimes' chat and
  * browser harness come in. What it needs from the page it asks the reactor
@@ -14,7 +14,7 @@
  * `useBrowserInference`: a temporary key when nobody is signed in, the
  * person's own token when somebody is.
  *
- * @module PitcherAgent
+ * @module DecksAgent
  */
 
 import type { JSX } from 'react';
@@ -28,12 +28,12 @@ import { browserProtocolConfig } from '@datalayer/agent-runtimes/lib/runtimes/br
 import { getAgentspecs } from '@datalayer/agent-runtimes/lib/specs/agents/index.js';
 import { useAgentCommandTools } from '@datalayer/agent-runtimes/lib/tools/adapters/commands/frontendCommandTools.js';
 
-export type PitcherAgentProps = {
+export type DecksAgentProps = {
   /** The agentspec to build the chat from. */
   agentId: string;
 };
 
-export function PitcherAgent({ agentId }: PitcherAgentProps): JSX.Element {
+export function DecksAgent({ agentId }: DecksAgentProps): JSX.Element {
   const spec = useMemo(() => getAgentspecs(agentId), [agentId]);
   const { inference, anonymous, needsSignIn } = useBrowserInference(true);
   // Every command the plugins on this page offer an agent — the decks
@@ -118,4 +118,4 @@ export function PitcherAgent({ agentId }: PitcherAgentProps): JSX.Element {
   );
 }
 
-export default PitcherAgent;
+export default DecksAgent;

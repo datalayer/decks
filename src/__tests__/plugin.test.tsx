@@ -123,6 +123,36 @@ describe('DecksPlugin', () => {
     expect(getDecksState().creating).toBe(true);
   });
 
+  it('lists, reads and appends the slides of the open deck, no id needed', async () => {
+    const reactor = await startReactor();
+    openDeck('tests/three');
+    const listed = await reactor.executeCommand<
+      undefined,
+      { id: string; slides: { slide: number; type: string }[] }
+    >(DECKS_DATA_COMMANDS.listSlides);
+    expect(listed.id).toBe('tests/three');
+    expect(listed.slides.map((s) => s.slide)).toEqual([1, 2, 3]);
+    const one = await reactor.executeCommand<
+      { slide: number },
+      { id: string; slide: number; slide_spec: { type: string } }
+    >(DECKS_DATA_COMMANDS.getSlide, { slide: 2 });
+    expect(one).toMatchObject({ id: 'tests/three', slide: 2 });
+    expect(one.slide_spec.type).toBe(listed.slides[1].type);
+    await expect(
+      reactor.executeCommand(DECKS_DATA_COMMANDS.getSlide, { slide: 9 } as never),
+    ).rejects.toThrow(/slides 1 to 3/);
+    const added = await reactor.executeCommand<
+      { slide_spec: { type: string; title: string } },
+      { slide: number; slides: number }
+    >(DECKS_DATA_COMMANDS.addSlide, { slide_spec: { type: 'closing', title: 'Bye' } });
+    expect(added).toMatchObject({ slide: 4, slides: 4 });
+    // Appended and shown: the deck moved to what was just added.
+    expect(getDecksState()).toMatchObject({ selected: 'tests/three', slide: 4 });
+    // With nothing open, the tools say what to do rather than guess.
+    await reactor.executeCommand(DECKS_COMMANDS.list);
+    await expect(reactor.executeCommand(DECKS_DATA_COMMANDS.listSlides)).rejects.toThrow(/Open one/);
+  });
+
   it('declares its agent tools, one per command an agent may call', async () => {
     const reactor = await startReactor();
     const [bundle] = reactor.getContributions(AgentTools).map((c) => c.value);

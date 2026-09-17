@@ -11,4 +11,4 @@ datalayer decks serve talk.yaml --reactor-plugins ai-agents
 
 | Plugin | Name for `--reactor-plugins` | What it adds |
 | --- | --- | --- |
-| [`ai-agents`](./ai-agents) | `ai-agents` | The Pitcher — an AI agent beside the decks, on a temporary key, driving the decks commands |
+| [`ai-agents`](./ai-agents) | `ai-agents` | The Decks agent (`example-decks`) beside the decks, on a temporary key, driving the decks commands |

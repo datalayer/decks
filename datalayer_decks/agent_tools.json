@@ -159,6 +159,62 @@
       }
     },
     {
+      "name": "decks_list_slides",
+      "command": "decks.listSlides",
+      "description": "The slides of a deck — number, type, title — the open deck when no id is given. The cheap way to find \"the metrics slide\" before reading or changing it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks. The open deck when omitted."
+          }
+        }
+      }
+    },
+    {
+      "name": "decks_get_slide",
+      "command": "decks.getSlide",
+      "description": "One slide of a deck, whole, by its 1-based number — the open deck when no id is given.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks. The open deck when omitted."
+          },
+          "slide": {
+            "type": "integer",
+            "description": "1-based slide number, from the deck's outline."
+          }
+        },
+        "required": [
+          "slide"
+        ]
+      }
+    },
+    {
+      "name": "decks_add_slide",
+      "command": "decks.addSlide",
+      "description": "Append a slide at the end of a deck — the open deck when no id is given — and show it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The deck id, `collection/slug` or `slug`, as listed by decks_list_decks. The open deck when omitted."
+          },
+          "slide_spec": {
+            "type": "object",
+            "description": "A whole slide: `{type, ...}`."
+          }
+        },
+        "required": [
+          "slide_spec"
+        ]
+      }
+    },
+    {
       "name": "decks_delete_deck",
       "command": "decks.deleteDeck",
       "description": "Delete a deck by id. Irreversible; ask first.",

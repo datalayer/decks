@@ -48,7 +48,8 @@ def test_the_plugin_declares_its_agent_tools() -> None:
     # Data and screen alike, from the plugin — no agent spec names any of these.
     assert bundle["toolset"] == [
         "decks_list_decks", "decks_get_deck", "decks_create_deck", "decks_update_deck",
-        "decks_update_slide", "decks_insert_slide", "decks_delete_slide", "decks_delete_deck",
+        "decks_update_slide", "decks_insert_slide", "decks_delete_slide",
+        "decks_list_slides", "decks_get_slide", "decks_add_slide", "decks_delete_deck",
         "decks_list", "decks_open", "decks_go_to_slide", "decks_next_slide",
         "decks_previous_slide", "decks_present", "decks_print",
     ]

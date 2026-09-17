@@ -35,5 +35,9 @@ export const DECKS_DATA_COMMANDS = {
   updateSlide: 'decks.updateSlide',
   insertSlide: 'decks.insertSlide',
   deleteSlide: 'decks.deleteSlide',
+  // The slide tools an agent beside an *open* deck reaches for: no id needed.
+  listSlides: 'decks.listSlides',
+  getSlide: 'decks.getSlide',
+  addSlide: 'decks.addSlide',
   deleteDeck: 'decks.deleteDeck',
 } as const;

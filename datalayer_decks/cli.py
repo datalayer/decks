@@ -103,8 +103,8 @@ def serve(
         "--reactor-plugins",
         help=(
             "Optional interface plugins to activate, by name; repeat the option or "
-            "separate names with commas. Known: ai-agents (the Pitcher, an AI agent "
-            "beside the decks on a temporary key)."
+            "separate names with commas. Known: ai-agents (the Decks agent "
+            "beside the decks, on a temporary key)."
         ),
     ),
 ) -> None:

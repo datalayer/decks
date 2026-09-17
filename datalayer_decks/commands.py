@@ -49,6 +49,9 @@ DECKS_DATA_COMMANDS: dict[str, str] = {
     "updateSlide": "decks.updateSlide",
     "insertSlide": "decks.insertSlide",
     "deleteSlide": "decks.deleteSlide",
+    "listSlides": "decks.listSlides",
+    "getSlide": "decks.getSlide",
+    "addSlide": "decks.addSlide",
     "deleteDeck": "decks.deleteDeck",
 }
 
@@ -92,6 +95,20 @@ def _id_of(argument: Mapping[str, Any]) -> str:
     identifier = argument.get("id")
     if not isinstance(identifier, str) or not identifier:
         raise ValueError("Which deck? Pass its `id`, as listed by decks_list_decks.")
+    return identifier
+
+
+def _id_or_open(argument: Mapping[str, Any]) -> str:
+    """The slide tools' ``id``: optional in the browser, where a deck is open.
+
+    A store has no open deck, so here the id is asked for — in words that say
+    why, rather than the browser's "open one" which means nothing on a server.
+    """
+    identifier = argument.get("id")
+    if not isinstance(identifier, str) or not identifier:
+        raise ValueError(
+            "Which deck? There is no open deck on a server: pass its `id`, as listed by decks_list_decks."
+        )
     return identifier
 
 
@@ -285,6 +302,29 @@ def register_deck_commands(commands: PluginCommands, store: DeckStore) -> None:
         del slides[at - 1]
         return deck_written(_write_slides(store, identifier, slides))
 
+    def list_slides(argument: Any = None) -> dict[str, Any]:
+        record = _existing(store, _id_or_open(_argument(argument)))
+        return {
+            "id": record.id,
+            "title": deck_summary(record)["title"],
+            "slides": deck_outline(record.spec),
+        }
+
+    def get_slide(argument: Any = None) -> dict[str, Any]:
+        arguments = _argument(argument)
+        record = _existing(store, _id_or_open(arguments))
+        slides = _slides_of(record)
+        at = _at(_slide_of(arguments), len(slides))
+        return {"id": record.id, "slide": at, "slide_spec": slides[at - 1]}
+
+    def add_slide(argument: Any = None) -> dict[str, Any]:
+        arguments = _argument(argument)
+        identifier = _id_or_open(arguments)
+        slides = _slides_of(_existing(store, identifier))
+        slides.append(_spec_of(arguments, "slide_spec"))
+        record = _write_slides(store, identifier, slides)
+        return {**deck_written(record), "slide": len(slides)}
+
     def delete_deck(argument: Any = None) -> dict[str, Any]:
         identifier = _id_of(_argument(argument))
         _existing(store, identifier)
@@ -339,6 +379,27 @@ def register_deck_commands(commands: PluginCommands, store: DeckStore) -> None:
             "Delete a slide",
             "One slide of a deck, by its 1-based number",
             delete_slide,
+            "",
+        ),
+        (
+            DECKS_DATA_COMMANDS["listSlides"],
+            "List the slides",
+            "The slides of a deck: number, type, title",
+            list_slides,
+            "",
+        ),
+        (
+            DECKS_DATA_COMMANDS["getSlide"],
+            "Read a slide",
+            "One slide of a deck, by its 1-based number",
+            get_slide,
+            "",
+        ),
+        (
+            DECKS_DATA_COMMANDS["addSlide"],
+            "Add a slide",
+            "Append a slide at the end of a deck",
+            add_slide,
             "",
         ),
         (

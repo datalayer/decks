@@ -4,9 +4,10 @@
 
 An AI agent beside the decks: a frontend plugin for a Reactor host that
 already mounts `@datalayer/decks/plugin`. It puts a floating chat in the
-host's root slot with the **Pitcher** in it — the `worker-pitcher` agentspec
-from [agentspecs](https://github.com/datalayer/agentspecs), the deck agent
-tailored to pitch decks.
+host's root slot with the **Decks agent** in it — the `example-decks`
+agentspec from [agentspecs](https://github.com/datalayer/agentspecs), the
+reference deck agent. (`worker-pitcher`, the landing's deck editor agent, is
+its pitch-deck sibling: the same frontend toolset, a different trade.)
 
 ```bash
 datalayer decks serve talk.yaml --reactor-plugins ai-agents
@@ -24,10 +25,11 @@ rather than declaring.
 
 ## The agent
 
-- **Spec**: `worker-pitcher` — its prompt (the investor arc mapped to slide
-  types, action titles, numbers as metrics), model, name, icon, welcome and
-  suggestions. Another agentspec can be named through the plugin's `agentId`
-  configuration.
+- **Spec**: `example-decks` — its prompt (the deck data model, the tools,
+  how to draft and change a deck), model, name, icon, welcome and
+  suggestions. Both it and `worker-pitcher` name the `decks` frontend toolset
+  (`agentspecs/frontend-tools/decks.yaml`), so either can be named through
+  the plugin's `agentId` configuration.
 - **Harness**: agent-runtimes' browser harness — the loop runs in the page,
   no runtime is started.
 - **Key**: a **temporary key** — an anonymous session the Datalayer inference
@@ -53,6 +55,6 @@ build does not know is logged and skipped.
 ```
 plugins/ai-agents/
 ├── src/index.tsx        the plugin: definePlugin, a root-slot component, lazy runtime
-├── src/PitcherAgent.tsx the chat: spec, tools from the reactor, temporary key, ChatFloating
+├── src/DecksAgent.tsx   the chat: spec, tools from the reactor, temporary key, ChatFloating
 └── package.json         @datalayer/decks-plugin-ai-agents
 ```

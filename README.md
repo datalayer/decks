@@ -117,9 +117,11 @@ that move a deck on screen stay with the browser plugin: a store has no
 screen.
 
 In the `datalayer decks` interface itself, `--reactor-plugins ai-agents`
-puts the Pitcher (`worker-pitcher`) beside the decks: a floating chat on a
+puts the Decks agent (`example-decks`) beside the decks: a floating chat on a
 temporary inference key, with the bundle above as its tools, read from the
 reactor rather than declared — see [`plugins/ai-agents`](./plugins/ai-agents).
+`example-decks` and `worker-pitcher` (the landing's deck editor agent) name
+the same frontend toolset, `decks`, in agentspecs.
 
 In a Loop (`@datalayer/agent-runtimes`), `@datalayer/loop-plugin-decks`
 mounts this plugin beside the chat — the list in the sidebar, a **Deck**
