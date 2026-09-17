@@ -63,6 +63,17 @@ def _load_deck(path: Path) -> dict[str, Any]:
     return value
 
 
+def _plugin_names(values: Optional[list[str]]) -> list[str]:
+    """``--reactor-plugins a,b --reactor-plugins c`` → ``["a", "b", "c"]``, once each."""
+    names: list[str] = []
+    for value in values or []:
+        for name in value.split(","):
+            name = name.strip()
+            if name and name not in names:
+                names.append(name)
+    return names
+
+
 def _file_slug(path: Path) -> str:
     """Turn a filename into the same conservative address the store accepts."""
     slug = _SLUG_CHARACTER.sub("-", path.stem.lower()).strip("-._")
@@ -87,6 +98,15 @@ def serve(
     ui: bool = typer.Option(True, "--ui/--no-ui", help="Serve the built interface at /."),
     open_browser: bool = typer.Option(True, "--open/--no-open", help="Open the interface in a browser."),
     reload: bool = typer.Option(False, "--reload", help="Reload on code changes (development)."),
+    reactor_plugins: Optional[list[str]] = typer.Option(
+        None,
+        "--reactor-plugins",
+        help=(
+            "Optional interface plugins to activate, by name; repeat the option or "
+            "separate names with commas. Known: ai-agents (the Pitcher, an AI agent "
+            "beside the decks on a temporary key)."
+        ),
+    ),
 ) -> None:
     """Serve the decks API and interface, optionally opening one YAML deck."""
     from reactor.host import run_reactor_host
@@ -125,10 +145,13 @@ def serve(
             assert selected_dir is not None
             slug = _file_slug(deck)
             DeckStore(selected_dir).put("local", slug, specification)
-        application = create_app(with_ui=ui, decks_dir=selected_dir)
+        plugins = _plugin_names(reactor_plugins)
+        application = create_app(with_ui=ui, decks_dir=selected_dir, reactor_plugins=plugins)
         path = f"decks/local/{slug}" if specification is not None else ""
         url = f"http://{host}:{port}/{path}"
         typer.secho(f"Datalayer Decks on {url}", fg=typer.colors.GREEN, err=True)
+        if plugins:
+            typer.secho(f"Reactor plugins: {', '.join(plugins)}", fg=typer.colors.GREEN, err=True)
         if open_browser and ui:
             # Best effort, and only once the server is about to listen. A headless
             # machine simply has no browser to open.

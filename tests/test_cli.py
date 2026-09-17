@@ -68,3 +68,28 @@ def test_serve_loads_a_yaml_file_and_opens_its_deep_link(
     assert records[0]["id"] == "local/my-welcome"
     assert records[0]["spec"]["deck"]["title"] == "Welcome"
     assert "http://127.0.0.1:8797/decks/local/my-welcome" in result.output
+
+
+def test_serve_names_the_reactor_plugins_to_the_interface(tmp_path: Path, monkeypatch: object) -> None:
+    """``--reactor-plugins``: repeatable, comma-separated, deduplicated, and answered at ``/config``."""
+    captured: dict[str, object] = {}
+
+    def run(application: object, **options: object) -> None:
+        captured["config"] = TestClient(application).get("/config").json()
+
+    monkeypatch.setattr("reactor.host.run_reactor_host", run)
+    result = runner.invoke(
+        app,
+        [
+            "serve", "--no-ui", "--no-open", "--decks-dir", str(tmp_path),
+            "--reactor-plugins", "ai-agents,graph", "--reactor-plugins", "ai-agents",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert captured["config"]["reactor_plugins"] == ["ai-agents", "graph"]
+    assert "Reactor plugins: ai-agents, graph" in result.output
+
+    plain = runner.invoke(app, ["serve", "--no-ui", "--no-open", "--decks-dir", str(tmp_path)])
+    assert plain.exit_code == 0, plain.output
+    assert captured["config"]["reactor_plugins"] == []
+    assert "Reactor plugins:" not in plain.output

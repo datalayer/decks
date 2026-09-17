@@ -1,0 +1,47 @@
+{
+  "name": "@datalayer/decks-plugin-ai-agents",
+  "version": "1.0.0",
+  "description": "An AI agent beside the decks: the Pitcher, on a temporary inference key, driving the decks plugin's own commands as its tools.",
+  "license": "Datalayer License",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "datalayer",
+    "reactor",
+    "plugins",
+    "decks",
+    "agents"
+  ],
+  "dependencies": {
+    "@datalayer/agent-runtimes": "^1.3.10",
+    "@datalayer/core": "^1.2.6",
+    "@datalayer/primer-addons": "^1.0.21",
+    "@primer/react": "^37.31.0"
+  },
+  "peerDependencies": {
+    "@datalayer/reactor": "^1.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:lib": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf lib",
+    "watch:lib": "tsc -w -p tsconfig.json"
+  }
+}

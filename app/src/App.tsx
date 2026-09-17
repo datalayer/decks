@@ -20,6 +20,12 @@
  * pulled in by the plugin and shown beside them. Their components are
  * registered in the same breath, since a spec may only name what the host
  * has offered.
+ *
+ * Beyond the plugins every Decks host runs, a few are bundled but off until
+ * the server names them — `datalayer decks serve --reactor-plugins ai-agents`
+ * — so a plugin that brings a chat and a model does not weigh on a host that
+ * only shows slides. `OPTIONAL_PLUGINS` is that list, by the names the CLI
+ * takes.
  */
 
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -33,6 +39,7 @@ import { AppearancePlugin, ThemePlugin } from '@datalayer/primer-addons/lib/reac
 import { ShellPlugin } from '@datalayer/reactor-shell';
 import { PluginsManagerPlugin } from '@datalayer/reactor-manager';
 import { CommandsPlugin } from '@datalayer/reactor-commands';
+import { DecksAiAgentsPlugin } from '@datalayer/decks-plugin-ai-agents';
 import {
   DECKS_ROUTE,
   DeckPrintView,
@@ -68,6 +75,38 @@ registerDecks(exampleDecks);
 registerDeckComponents(appDeckComponents);
 
 const BACKEND_URL: string = __DECKS_BACKEND_URL__ || window.location.origin;
+
+/** What the server was started with, as `main.tsx` read it from `/config`. */
+export type DecksHostConfig = {
+  /** Names among {@link OPTIONAL_PLUGINS} to activate. */
+  reactorPlugins?: string[];
+  /** The inference service the AI plugin reaches the model at. */
+  aiInferenceUrl?: string;
+};
+
+/**
+ * The plugins a host may ask for by name, each built with what the host's
+ * configuration has to say to it. The name is the CLI's word, not the
+ * package's: `--reactor-plugins ai-agents`.
+ */
+const OPTIONAL_PLUGINS: Record<string, (config: DecksHostConfig) => unknown> = {
+  'ai-agents': (config) =>
+    configurePlugin(DecksAiAgentsPlugin, { inferenceUrl: config.aiInferenceUrl }),
+};
+
+/** The optional plugins the configuration names, built; unknown names are said. */
+function optionalPlugins(config: DecksHostConfig): unknown[] {
+  return (config.reactorPlugins ?? []).flatMap((name) => {
+    const build = OPTIONAL_PLUGINS[name];
+    if (!build) {
+      console.warn(
+        `[decks] No optional plugin is named "${name}"; this build knows: ${Object.keys(OPTIONAL_PLUGINS).join(', ')}.`,
+      );
+      return [];
+    }
+    return [build(config)];
+  });
+}
 
 /**
  * What the address asks for.
@@ -198,8 +237,9 @@ function useAddressBar(): void {
   }, [open, slide]);
 }
 
-function createReactor() {
+function createReactor(config: DecksHostConfig) {
   return buildReactorFromPlugins([
+    ...optionalPlugins(config),
     // The decks *are* this application, so "none" is not a view of it: the
     // selector stays out of the header until an extension contributes a
     // second view, and the cycle command wraps among the views there are.
@@ -215,16 +255,18 @@ function createReactor() {
   ]);
 }
 
-export default function App() {
+export default function App({ config = {} }: { config?: DecksHostConfig }) {
   const address = useMemo(readAddress, []);
   if (address.print) {
     return <PrintPage segments={address.segments} />;
   }
-  return <Shell />;
+  return <Shell config={config} />;
 }
 
-function Shell() {
-  const reactor = useMemo(createReactor, []);
+function Shell({ config }: { config: DecksHostConfig }) {
+  // Built once: the configuration is what the page was started with.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const reactor = useMemo(() => createReactor(config), []);
   useReactor(reactor);
   useAddressBar();
   return (

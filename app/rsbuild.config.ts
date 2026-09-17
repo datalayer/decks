@@ -71,6 +71,7 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ['styled-components'],
     // The app declares Reactor as a sibling `file:` dependency. Bundle its
     // TypeScript entry points directly so a monorepo link and a plain checkout
     // behave identically, without depending on a previously generated lib/.
@@ -103,6 +104,27 @@ export default defineConfig({
         import.meta.dirname,
         'node_modules/@primer/react/lib/index.js',
       ),
+      // The one Primer subpath the bundle uses. Named exactly, because a
+      // prefix alias (or `dedupe`, which is one underneath) bypasses Primer's
+      // `exports` map and cannot find `experimental` as a path.
+      '@primer/react/experimental$': path.resolve(
+        import.meta.dirname,
+        'node_modules/@primer/react/lib/experimental/index.js',
+      ),
+      // One primer-addons for everything in the bundle — and the workspace's
+      // checkout rather than the copy installed here: agent-runtimes and
+      // jupyter-lexical are built against the checkout, which is ahead of the
+      // published package under the same version. Two copies would be two
+      // theme stores; the older copy would be missing exports. A prefix, so
+      // `@datalayer/primer-addons/lib/reactor` maps too (no `exports` map).
+      '@datalayer/primer-addons': path.resolve(import.meta.dirname, '../../../primer/addons'),
+      // `@datalayer/core`'s navigation adapter does `require('next/navigation')`
+      // inside a try/catch, for hosts that are Next.js applications. This one
+      // is not, but rspack resolves the require all the same and drags Next
+      // — and its Node-only dependencies — into a browser bundle. An empty
+      // module is what the adapter expects to find when Next is absent.
+      'next/navigation': false,
+      'next/router': false,
       'styled-components$': path.resolve(
         import.meta.dirname,
         'node_modules/styled-components/dist/styled-components.browser.esm.js',
@@ -112,6 +134,12 @@ export default defineConfig({
         '../../reactor/src/react/index.ts',
       ),
       '@datalayer/reactor$': path.resolve(import.meta.dirname, '../../reactor/src/index.ts'),
+      // The optional plugins live beside the app, as source; bundled here,
+      // activated only when the server names them (`App.tsx`).
+      '@datalayer/decks-plugin-ai-agents$': path.resolve(
+        import.meta.dirname,
+        '../plugins/ai-agents/src/index.tsx',
+      ),
     },
   },
   server: { port: 5190 },

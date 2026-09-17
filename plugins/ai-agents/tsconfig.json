@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib",
+    "jsx": "react-jsx",
+    "composite": false,
+    "declaration": true,
+    "baseUrl": ".",
+    "paths": {
+      "@datalayer/reactor": ["../../../reactor/lib/index.d.ts"],
+      "@datalayer/reactor/react": ["../../../reactor/lib/react/index.d.ts"]
+    }
+  },
+  "include": ["src"]
+}
