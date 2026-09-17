@@ -90,8 +90,13 @@ export type DecksHostConfig = {
  * package's: `--reactor-plugins ai-agents`.
  */
 const OPTIONAL_PLUGINS: Record<string, (config: DecksHostConfig) => unknown> = {
+  // The service, in order: what the server was started with, what the app
+  // was built with (`DATALAYER_AI_INFERENCE_URL` at build time), else the
+  // plugin's default — as the cms-astro example resolves its own.
   'ai-agents': (config) =>
-    configurePlugin(DecksAiAgentsPlugin, { inferenceUrl: config.aiInferenceUrl }),
+    configurePlugin(DecksAiAgentsPlugin, {
+      inferenceUrl: config.aiInferenceUrl || __DECKS_AI_INFERENCE_URL__ || undefined,
+    }),
 };
 
 /** The optional plugins the configuration names, built; unknown names are said. */

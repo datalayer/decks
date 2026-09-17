@@ -55,6 +55,15 @@ export const DECKS_AI_AGENTS_PLUGIN_NAME = '@datalayer/decks-plugin-ai-agents';
  */
 export const DEFAULT_AGENT_ID = 'example-decks';
 
+/**
+ * Where the model is reached when the host names no service: the Datalayer
+ * cloud, which is where a temporary key comes from. Named here, as the
+ * reactor's cms-astro/ai-agents example names it, rather than left to
+ * whatever the core store held before this plugin was built — a value that
+ * may have been set by another application on the same origin.
+ */
+export const DEFAULT_INFERENCE_URL = 'https://r1.datalayer.run';
+
 export type DecksAiAgentsPluginConfig = {
   /** Where the chat renders; a slot the host renders once, at the root. */
   slot: string;
@@ -85,11 +94,13 @@ export const DecksAiAgentsPlugin = definePlugin<
     inferenceUrl: undefined,
   },
   build: ({ config }) => {
-    // Named before the first render, so the harness's hook reads it when the
-    // chat mounts rather than after a first request went to the default.
-    if (config.inferenceUrl) {
-      coreStore.getState().setConfiguration({ aiInferenceUrl: config.inferenceUrl });
-    }
+    // Always, and before the first render: the harness's hook reads the store
+    // when the chat mounts, and the store is shared by everything on the
+    // page — so the service this plugin was told about (or its default) is
+    // what the chat uses, never a value some earlier application left there.
+    coreStore
+      .getState()
+      .setConfiguration({ aiInferenceUrl: config.inferenceUrl || DEFAULT_INFERENCE_URL });
     const Agent = (): JSX.Element => (
       <Suspense fallback={null}>
         <DecksAgent agentId={config.agentId} />

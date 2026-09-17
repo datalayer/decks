@@ -31,6 +31,11 @@ export default defineConfig({
         process.env.DECKS_BACKEND_URL ??
           (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8797'),
       ),
+      // The inference service the AI plugin reaches when the server names
+      // none: fixed at build time, as Vite's `VITE_DATALAYER_AI_INFERENCE_URL`
+      // is for the reactor's cms-astro example. Empty means the plugin's own
+      // default.
+      __DECKS_AI_INFERENCE_URL__: JSON.stringify(process.env.DATALAYER_AI_INFERENCE_URL ?? ''),
     },
   },
   html: { title: 'Datalayer Decks' },
