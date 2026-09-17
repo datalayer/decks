@@ -5,7 +5,9 @@
 """Decks as a Reactor extension: the API as a plugin, the UI as a frontend.
 
 Installing ``datalayer_decks`` beside any Reactor host publishes this. The
-Python plugin provides the ``/decks`` routes; the frontend half is the built
+Python plugin provides the ``/decks`` routes and registers the deck commands —
+the data half of the suite the browser plugin registers, under the same ids
+(see :mod:`datalayer_decks.commands`); the frontend half is the built
 ``@datalayer/decks/plugin`` as a Module Federation container, when the app
 build has produced one, so a shell that bootstraps its extensions gets the
 Decks view, list and commands without importing the package.
@@ -27,6 +29,7 @@ from reactor import (
 )
 
 from .api import build_decks_router
+from .commands import register_deck_commands
 from .storage import DeckStore
 
 #: What an agent may do with the decks plugin — every command it registers,
@@ -53,6 +56,17 @@ class DecksPlugin:
 
     def provide_routes(self) -> list[dict]:
         return [{"path": "/decks", "method": "GET", "summary": "List decks."}]
+
+    def provide_slash_commands(self, commands) -> None:  # noqa: ANN001 — reactor's PluginCommands
+        """The deck commands, in the host's registry.
+
+        The same ids the TypeScript plugin registers in a browser, so the one
+        ``AgentTools`` bundle below describes both halves and a palette, a
+        ``reactor commands run`` and an agent all reach the same command. The
+        data commands only: the rest drive a deck on a screen this tier does
+        not have (see :mod:`datalayer_decks.commands`).
+        """
+        register_deck_commands(commands, self.store)
 
     def provide_agent_tools(self) -> list[dict]:
         """What an agent may do with the decks plugin — reading and writing

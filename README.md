@@ -105,8 +105,16 @@ edits, `decks_delete_deck` — and the screen — `decks_open`, `decks_go_to_sli
 to this server when the plugin was given one — and answering with what the
 model needs next. No [agentspec](https://github.com/datalayer/agentspecs)
 names a deck tool; `example-decks` declares `tools: []` and gets them all from
-the plugin it is mounted beside. The Python half serves the same file from
-`GET /plugins/agent-tools`.
+the plugin it is mounted beside.
+
+The Python half serves the same file from `GET /plugins/agent-tools`, and
+registers the data half of the suite under the same ids
+(`datalayer_decks/commands.py`, through `provide_slash_commands`) — so on a
+host with no browser the commands the bundle names are commands the reactor
+actually has, reachable from `reactor commands list` and `reactor commands run
+decks.getDeck '{"id": "talks/hello"}'` as much as from an agent. The seven
+that move a deck on screen stay with the browser plugin: a store has no
+screen.
 
 In a Loop (`@datalayer/agent-runtimes`), `@datalayer/loop-plugin-decks`
 mounts this plugin beside the chat — the list in the sidebar, a **Deck**
