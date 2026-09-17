@@ -104,7 +104,7 @@ edits, `decks_delete_deck` — and the screen — `decks_open`, `decks_go_to_sli
 `DECKS_COMMANDS`), run on the page against the catalog and the store — saved
 to this server when the plugin was given one — and answering with what the
 model needs next. No [agentspec](https://github.com/datalayer/agentspecs)
-names a deck tool; `worker-decks` declares `tools: []` and gets them all from
+names a deck tool; `example-decks` declares `tools: []` and gets them all from
 the plugin it is mounted beside. The Python half serves the same file from
 `GET /plugins/agent-tools`.
 
