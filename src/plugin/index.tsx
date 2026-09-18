@@ -140,7 +140,7 @@ export const DecksPlugin = definePlugin<DecksPluginConfig, unknown, ReactorReact
   version: '1.0.0',
   displayName: 'Decks',
   description: 'Presentations described as data: list them, open one, make a new one.',
-  octicon: 'project',
+  octicon: 'file-media',
   emoji: '\u{1F4CA}',
   config: {
     listSlot: 'sidebar',
