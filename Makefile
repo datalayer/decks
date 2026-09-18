@@ -48,7 +48,7 @@ example-ai: ## serve the welcome deck with the AI agents plugin: the Decks agent
 dev-app: ## the interface on :5190 against a server on :8797
 	npm run dev --prefix app
 
-publish-npm: clean build-tsc ## publish
+publish-npm: clean build-lib ## publish the TypeScript package to npm (lib/ and style/)
 	npm publish --access public
 	echo open https://www.npmjs.com/package/@datalayer/decks
 
