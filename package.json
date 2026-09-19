@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/decks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Presentations described as data: a spec-driven Reveal.js deck engine, and the Reactor plugin that lists, opens and creates decks in any Reactor shell.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
