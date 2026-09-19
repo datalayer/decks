@@ -48,9 +48,20 @@ example-ai: ## serve the welcome deck with the AI agents plugin: the Decks agent
 dev-app: ## the interface on :5190 against a server on :8797
 	npm run dev --prefix app
 
-publish-npm: clean build-lib ## publish the TypeScript package to npm (lib/ and style/)
+publish-npm: clean build-lib ## publish the TypeScript package (lib/ and style/), then every plugin package not marked private
 	npm publish --access public
-	echo open https://www.npmjs.com/package/@datalayer/decks
+	@set -e; for dir in plugins/*/; do \
+		[ -f "$$dir/package.json" ] || continue; \
+		name=$$(node -p "require('./$$dir/package.json').name"); \
+		private=$$(node -p "require('./$$dir/package.json').private === true"); \
+		if [ "$$private" = "true" ]; then \
+			echo "[publish] $$name is private, skipped"; \
+			continue; \
+		fi; \
+		echo "[publish] $$name"; \
+		( cd "$$dir" && npm run clean && npm run build && npm publish ); \
+	done
+	@echo open https://www.npmjs.com/package/@datalayer/decks
 
 publish-pypi: # publish the pypi package
 	git clean -fdx && \
