@@ -20,6 +20,7 @@
 import { defineConfig, rspack } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { pluginStyledComponents } from '@rsbuild/plugin-styled-components';
+import fs from 'node:fs';
 import path from 'node:path';
 
 export default defineConfig({
@@ -51,7 +52,15 @@ export default defineConfig({
      * configuration rather than a new guess.
      */
     rspack: {
-      plugins: [new rspack.ProvidePlugin({ process: 'process/browser' })],
+      // Named by absolute path: the plugin's own node_modules (a plain
+      // checkout installs one; the workspace hoists everything) carry
+      // modules that read `process` too, and a bare 'process/browser'
+      // resolves from where each module lives, not from here.
+      plugins: [
+        new rspack.ProvidePlugin({
+          process: path.resolve(import.meta.dirname, 'node_modules/process/browser.js'),
+        }),
+      ],
     },
     /*
      * What JupyterLab needs from a bundler, for the one slide that runs a
@@ -122,12 +131,30 @@ export default defineConfig({
       // published package under the same version. Two copies would be two
       // theme stores; the older copy would be missing exports. A prefix, so
       // `@datalayer/primer-addons/lib/reactor` maps too (no `exports` map).
-      '@datalayer/primer-addons': path.resolve(import.meta.dirname, '../../../primer/addons'),
+      // ... when that checkout is there; a plain checkout (CI, a release
+      // build) has only the published package, which is then the one copy.
+      ...(fs.existsSync(path.resolve(import.meta.dirname, '../../../primer/addons'))
+        ? { '@datalayer/primer-addons': path.resolve(import.meta.dirname, '../../../primer/addons') }
+        : {}),
       // `@datalayer/core`'s navigation adapter does `require('next/navigation')`
       // inside a try/catch, for hosts that are Next.js applications. This one
       // is not, but rspack resolves the require all the same and drags Next
       // — and its Node-only dependencies — into a browser bundle. An empty
       // module is what the adapter expects to find when Next is absent.
+      // Node-shaped requests from the Jupyter stack (plotly's probe-image-size
+      // wants `stream` and `assert`): named by absolute path, because a plain
+      // checkout resolves each from the plugin's own node_modules, where
+      // neither is, while the workspace hoists them all to one place.
+      'stream$': path.resolve(import.meta.dirname, 'node_modules/stream-browserify/index.js'),
+      'assert$': path.resolve(import.meta.dirname, 'node_modules/assert/build/assert.js'),
+      // jupyter-lexical's formatter imports prettier 2's `parser-*` modules,
+      // which its own prettier provides, and prettier 3's `plugins/estree`,
+      // which only a prettier 3 has: this one. Exact, so the `parser-*`
+      // requests keep resolving to the prettier beside jupyter-lexical.
+      'prettier/plugins/estree$': path.resolve(
+        import.meta.dirname,
+        'node_modules/prettier/plugins/estree.js',
+      ),
       'next/navigation': false,
       'next/router': false,
       'styled-components$': path.resolve(

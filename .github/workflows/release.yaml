@@ -1,0 +1,239 @@
+# Copyright (c) 2022-2026 Datalayer, Inc.
+#
+# Datalayer License
+
+# Publishes the release a tag names: the wheel and sdist of datalayer-decks
+# to PyPI, and @datalayer/decks and @datalayer/decks-plugin-ai-agents to
+# npm, with no stored token — both registries trust this workflow file
+# (OIDC trusted publishing, through the `pypi` and `npm` environments).
+# Every package carries the same version (datalayer_decks/__version__.py
+# and the package.json copies; `make bump-patch` moves them together),
+# which the tag must name; a package already published at that version is
+# skipped, so a re-run after a partial upload publishes the rest.
+# @datalayer/decks-app is private and travels inside the wheel instead.
+# See RELEASE.md.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REACTOR_REF: v1.0.4
+  # The npm packages this workflow releases: the root package first (the
+  # plugin depends on it as a peer of the same host).
+  NPM_PACKAGES: . plugins/ai-agents
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      npm: ${{ steps.plan.outputs.npm }}
+      python: ${{ steps.plan.outputs.python }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: decks
+      - uses: actions/checkout@v4
+        with:
+          repository: datalayer/reactor
+          ref: ${{ env.REACTOR_REF }}
+          path: reactor
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check the tag names the version every package carries
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          py_version="$(python -c "import re;print(re.search(r'__version__\s*=\s*\"([^\"]+)\"', open('datalayer_decks/__version__.py').read())[1])")"
+          echo "tag=$tag datalayer-decks=$py_version"
+          test "$tag" = "$py_version"
+          for pkg in $NPM_PACKAGES app; do
+            name="$(node -p "require('./$pkg/package.json').name")"
+            version="$(node -p "require('./$pkg/package.json').version")"
+            echo "tag=$tag $name=$version"
+            test "$tag" = "$version"
+          done
+
+      - name: Find what is not published yet
+        id: plan
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          npm_todo=""
+          for pkg in $NPM_PACKAGES; do
+            name="$(node -p "require('./$pkg/package.json').name")"
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "npm: $name@$version is already published, skipping"
+            else
+              echo "npm: $name@$version will be published"
+              npm_todo="$npm_todo $pkg"
+            fi
+          done
+          echo "npm=${npm_todo# }" >> "$GITHUB_OUTPUT"
+          status="$(curl -sL -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/datalayer-decks/$version/json")"
+          if [ "$status" = "200" ]; then
+            echo "PyPI: datalayer-decks $version is already published, skipping"
+            echo "python=" >> "$GITHUB_OUTPUT"
+          else
+            echo "PyPI: datalayer-decks $version will be published"
+            echo "python=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build the reactor beside this repository
+        if: steps.plan.outputs.npm != '' || steps.plan.outputs.python != ''
+        working-directory: reactor
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+
+      - name: Build and test the TypeScript package and its plugin
+        if: steps.plan.outputs.npm != '' || steps.plan.outputs.python != ''
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund
+          npm run typecheck
+          npm run build:lib
+          npm test
+          (cd plugins/ai-agents && npm install --no-audit --no-fund && npm run build)
+
+      - name: Build the interface and the container (what the wheel carries)
+        if: steps.plan.outputs.python != ''
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          (cd app && npm install --no-audit --no-fund)
+          npm run app:build
+          npm run extension:build
+          test -f share/datalayer/reactor/apps/decks/index.html
+          test -f share/datalayer/reactor/extensions/decks/remoteEntry.js
+
+      - name: Pack the npm packages
+        if: steps.plan.outputs.npm != ''
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          mkdir -p dist-npm
+          for pkg in ${{ steps.plan.outputs.npm }}; do
+            (cd "$pkg" && npm pack --pack-destination "$GITHUB_WORKSPACE/decks/dist-npm")
+          done
+          ls -la dist-npm
+
+      - name: Build the Python package
+        if: steps.plan.outputs.python != ''
+        working-directory: decks
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip build
+          python -m pip install -e ".[test]"
+          python -m pytest tests -q
+          # share/ is built above, so hatch_build.py has nothing to build.
+          python -m build --sdist --wheel --outdir dist-py .
+          ls -la dist-py
+          python - <<'PY'
+          import glob, zipfile
+          names = zipfile.ZipFile(glob.glob("dist-py/*.whl")[0]).namelist()
+          assert any(n.endswith("apps/decks/index.html") for n in names), "the wheel lacks the interface"
+          assert any(n.endswith("extensions/decks/remoteEntry.js") for n in names), "the wheel lacks the container"
+          print("the wheel carries the interface and the container")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outputs.npm != ''
+        with:
+          name: npm
+          path: decks/dist-npm/*.tgz
+
+      - uses: actions/upload-artifact@v4
+        if: steps.plan.outputs.python != ''
+        with:
+          name: python
+          path: decks/dist-py/*
+
+  pypi:
+    needs: build
+    if: needs.build.outputs.python != ''
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  npm:
+    needs: build
+    if: needs.build.outputs.npm != ''
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@^11.5.1 && npm --version
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm
+          path: dist
+      - name: Publish
+        run: |
+          set -euo pipefail
+          # @datalayer/decks first: the plugin is used beside it.
+          for tarball in $(ls dist/datalayer-decks-[0-9]*.tgz 2>/dev/null) $(ls dist/*.tgz | grep -v '/datalayer-decks-[0-9]'); do
+            name="$(tar -xOzf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).name")"
+            version="$(tar -xOzf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).version")"
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already published, skipping"
+              continue
+            fi
+            # "./": npm reads a bare "dist/x.tgz" as the GitHub shorthand
+            # github:dist/x.tgz and refuses to fetch it (EALLOWGIT).
+            npm publish "./$tarball" --provenance --access public
+          done
+
+  release:
+    name: GitHub release
+    needs: [build, pypi, npm]
+    if: always() && needs.build.result == 'success' && needs.pypi.result != 'failure' && needs.npm.result != 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create the release with generated notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 && exit 0
+          gh release create "$GITHUB_REF_NAME" --title "Release $version" --generate-notes \
+            --notes "- [PyPI datalayer-decks](https://pypi.org/project/datalayer-decks/$version/)
+          - [npm @datalayer/decks](https://www.npmjs.com/package/@datalayer/decks/v/$version) · [@datalayer/decks-plugin-ai-agents](https://www.npmjs.com/package/@datalayer/decks-plugin-ai-agents/v/$version)"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

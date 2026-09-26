@@ -31,6 +31,7 @@ import typer
 import yaml
 from reactor import PluginManifest
 
+from .__version__ import __version__
 from .storage import DeckNotFound, DeckStore
 
 app = typer.Typer(
@@ -226,7 +227,7 @@ def delete(
 #: The identity of the extension, for the reactor that hosts the CLI.
 manifest = PluginManifest(
     name="decks-cli",
-    version="1.0.0",
+    version=__version__,
     description="The `decks` command group: serve, list, show, delete.",
     author="Datalayer",
     tags=["cli", "decks"],
