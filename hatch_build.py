@@ -47,8 +47,19 @@ class JavaScriptBuildHook(BuildHookInterface):
                 f"The wheel needs the built {' and '.join(missing)} under share/, and npm is not "
                 "on PATH to build them. Run `make build` first, or set DATALAYER_DECKS_SKIP_JS=1."
             )
-        if not (ROOT / "node_modules").is_dir() and not (ROOT.parent.parent.parent / "node_modules").is_dir():
+        workspace = ROOT.parent.parent.parent / "node_modules"
+        if not (ROOT / "node_modules").is_dir() and not workspace.is_dir():
             subprocess.run([npm, "install"], cwd=ROOT, check=True)
+        # The interface and the plugin it bundles are packages of their own,
+        # not members of the workspace: their dependencies are never hoisted,
+        # and the interface's bundler in particular has to be its own
+        # (a `git clean` leaves app/ resolving whatever rsbuild the workspace
+        # hoisted, which is not the one it was written against). Installed
+        # when absent, which is also what CI does.
+        for package in (ROOT / "app", ROOT / "plugins" / "ai-agents"):
+            if not (package / "node_modules").is_dir():
+                self.app.display_info(f"Installing {package.relative_to(ROOT)}'s dependencies ...")
+                subprocess.run([npm, "install", "--no-audit", "--no-fund"], cwd=package, check=True)
         self.app.display_info(f"Building the {' and '.join(missing)} into share/ ...")
         subprocess.run([npm, "run", "build:all"], cwd=ROOT, check=True)
         for name, marker in (("interface", APP), ("container", CONTAINER)):
