@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "datalayer_decks"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Datalayer Decks: presentations described as data, served with their Reactor interface by one command"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,8 +39,19 @@ decks = "datalayer_decks.cli:plugin"
 [project.entry-points."datalayer.reactor.extensions"]
 decks = "datalayer_decks.extension:extension"
 
+# The version lives in datalayer_decks/__version__.py; dev/bump_version.py moves
+# it and every package.json copy together (`make bump-patch`).
+[tool.hatch.version]
+path = "datalayer_decks/__version__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["datalayer_decks"]
+# The built halves are git-ignored, and hatch leaves ignored files out of
+# shared-data unless they are declared as build artifacts.
+artifacts = [
+  "share/datalayer/reactor/apps/decks",
+  "share/datalayer/reactor/extensions/decks",
+]
 
 # The JavaScript halves are built into share/ when the wheel is built and
 # they are missing; see hatch_build.py.
@@ -74,6 +85,13 @@ include = [
   "LICENSE",
 ]
 exclude = ["app/node_modules", "extension/node_modules", "**/dist"]
+# The sdist carries the built halves too (git-ignored, so declared): a
+# wheel built from it — which is what `python -m build` does — then needs
+# neither npm nor the reactor beside it.
+artifacts = [
+  "share/datalayer/reactor/apps/decks",
+  "share/datalayer/reactor/extensions/decks",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

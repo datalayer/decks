@@ -25,6 +25,20 @@ build: build-app build-extension ## build everything the wheel carries
 wheel: build ## build the wheel, JavaScript included
 	python -m build --wheel
 
+.PHONY: bump bump-patch bump-minor bump-major
+
+bump: ## bump the version in __version__.py and every package.json, asking which part
+	python dev/bump_version.py
+
+bump-patch: ## bump the patch version (1.0.3 -> 1.0.4)
+	python dev/bump_version.py patch
+
+bump-minor: ## bump the minor version (1.0.3 -> 1.1.0)
+	python dev/bump_version.py minor
+
+bump-major: ## bump the major version (1.0.3 -> 2.0.0)
+	python dev/bump_version.py major
+
 typecheck: ## type-check the package against the reactor source
 	npm run typecheck
 

@@ -34,6 +34,10 @@ export default defineConfig({
     pluginReact(),
     pluginModuleFederation({
       name: 'datalayer_decks',
+      // Named, because `datalayer_decks/extension.py` publishes exactly this
+      // file as the container's entry; the plugin's default is a hashed
+      // `static/js/datalayer_decks.<hash>.js` that nothing would find.
+      filename: 'remoteEntry.js',
       exposes: { './plugin': './src/plugin.ts' },
       shared: {
         react: { singleton: true, requiredVersion: '^19.0.0' },

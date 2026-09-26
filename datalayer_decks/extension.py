@@ -28,6 +28,7 @@ from reactor import (
     find_extension_frontend,
 )
 
+from .__version__ import __version__
 from .api import build_decks_router
 from .commands import register_deck_commands
 from .storage import DeckStore
@@ -42,7 +43,7 @@ DECKS_AGENT_TOOLS: dict = json.loads(
 
 DECKS_PLUGIN_MANIFEST = PluginManifest(
     name="decks",
-    version="1.0.0",
+    version=__version__,
     display_name="Decks",
     description="Stores and serves decks as JSON specifications.",
 )
@@ -98,7 +99,7 @@ def extension(store: DeckStore | None = None) -> ReactorExtension:
             plugins=[
                 FrontendPlugin(
                     name="@datalayer/decks",
-                    version="1.0.0",
+                    version=__version__,
                     display_name="Decks",
                     description="List, open and create decks.",
                     octicon="file-media",
@@ -109,7 +110,7 @@ def extension(store: DeckStore | None = None) -> ReactorExtension:
     return ReactorExtension(
         manifest=ExtensionManifest(
             name="decks",
-            version="1.0.0",
+            version=__version__,
             display_name="Decks",
             description="Presentations described as data.",
             octicon="file-media",

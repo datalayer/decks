@@ -1,6 +1,10 @@
 {
   "name": "@datalayer/decks-plugin-ai-agents",
-  "version": "1.0.1",
+  "version": "1.0.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/datalayer/decks.git"
+  },
   "publishConfig": {
     "access": "public"
   },

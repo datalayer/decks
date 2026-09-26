@@ -1,6 +1,13 @@
 {
   "name": "@datalayer/decks",
-  "version": "1.0.2",
+  "version": "1.0.3",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/datalayer/decks.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Presentations described as data: a spec-driven Reveal.js deck engine, and the Reactor plugin that lists, opens and creates decks in any Reactor shell.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -69,6 +76,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@types/node": "^24",
     "@module-federation/rsbuild-plugin": "^2.9.0",
     "@rsbuild/core": "^2.2.1",
     "@rsbuild/plugin-react": "^1.4.6",
