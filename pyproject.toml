@@ -13,7 +13,7 @@ description = "Datalayer Decks: presentations described as data, served with the
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "datalayer_reactor",
+  "datalayer_reactor>=1.0.4",
   "fastapi>=0.115.0",
   "pydantic>=2.8.0",
   "PyYAML>=6.0",

@@ -32,7 +32,7 @@
     "@primer/react": "^37.31.0"
   },
   "peerDependencies": {
-    "@datalayer/reactor": "^1.0.0",
+    "@datalayer/reactor": "^1.0.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
