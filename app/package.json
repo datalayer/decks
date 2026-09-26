@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/decks-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "The Datalayer Decks interface: a Reactor shell with the decks plugin, built into the wheel",
   "type": "module",
