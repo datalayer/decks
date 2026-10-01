@@ -14,6 +14,8 @@ import {
   cancelRename,
   closeDeck,
   configureDecksBackend,
+  configureDecksManagement,
+  DECKS_MANAGEMENT_REFUSAL,
   renameDeck,
   getDecksState,
   openDeck,
@@ -204,5 +206,39 @@ describe('revealed', () => {
     await addDeck({ slug: 'r', spec: spec('R') });
     openDeck('r');
     expect(getDecksState().revealed).toBe(before + 3); // addDeck opened it, then openDeck
+  });
+});
+
+describe('managing decks, when the host says the reader may not', () => {
+  it('refuses rename and delete by every way in, and says why', async () => {
+    await addDeck({ collection: 'talks', slug: 'kept', spec: spec('Kept') });
+    const id = 'talks/kept';
+    expect(getDecksState().canManage).toBe(true);
+    configureDecksManagement(false);
+    // The dialogs do not open…
+    beginRename(id);
+    beginDelete(id);
+    expect(getDecksState().renaming).toBeUndefined();
+    expect(getDecksState().deleting).toBeUndefined();
+    expect(getDecksState().error).toBe(DECKS_MANAGEMENT_REFUSAL);
+    // …and the writes an agent or a command calls are refused too.
+    await expect(removeDeck(id)).rejects.toThrow(DECKS_MANAGEMENT_REFUSAL);
+    await expect(renameDeck(id, { title: 'Other' })).rejects.toThrow(DECKS_MANAGEMENT_REFUSAL);
+    expect(deckById(id)).toBeDefined();
+    // Allowed again, the same calls go through.
+    configureDecksManagement(true);
+    beginDelete(id);
+    expect(getDecksState().deleting).toBe(id);
+    expect(await removeDeck(id)).toBe(true);
+  });
+
+  it('closes a dialog already open when management is taken away', async () => {
+    await addDeck({ collection: 'talks', slug: 'open-dialog', spec: spec('Open dialog') });
+    const id = 'talks/open-dialog';
+    beginRename(id);
+    expect(getDecksState().renaming).toBe(id);
+    configureDecksManagement(false);
+    expect(getDecksState().renaming).toBeUndefined();
+    configureDecksManagement(true);
   });
 });

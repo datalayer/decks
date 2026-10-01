@@ -45,34 +45,39 @@ const FAMILY_OF_ONE = '';
  * trailing action is a sibling of the row's button inside the `li`, and it
  * anchors a controlled menu.
  */
-const RowActions = ({ id, title }: { id: string; title: string }): JSX.Element => (
-  <ActionMenu>
-    <ActionMenu.Anchor>
-      <IconButton
-        icon={KebabHorizontalIcon}
-        aria-label={`Actions for ${title}`}
-        size="small"
-        variant="invisible"
-      />
-    </ActionMenu.Anchor>
-    <ActionMenu.Overlay width="small">
-      <ActionList>
-        <ActionList.Item onSelect={() => beginRename(id)}>
-          <ActionList.LeadingVisual>
-            <PencilIcon />
-          </ActionList.LeadingVisual>
-          Rename…
-        </ActionList.Item>
-        <ActionList.Item variant="danger" onSelect={() => beginDelete(id)}>
-          <ActionList.LeadingVisual>
-            <TrashIcon />
-          </ActionList.LeadingVisual>
-          Delete…
-        </ActionList.Item>
-      </ActionList>
-    </ActionMenu.Overlay>
-  </ActionMenu>
-);
+const RowActions = ({ id, title }: { id: string; title: string }): JSX.Element => {
+  // Shown to everybody, pressable by whoever may manage decks: a reader who
+  // may not sees what there would be to do, and that it is not theirs.
+  const { canManage } = useDecksState();
+  return (
+    <ActionMenu>
+      <ActionMenu.Anchor>
+        <IconButton
+          icon={KebabHorizontalIcon}
+          aria-label={`Actions for ${title}`}
+          size="small"
+          variant="invisible"
+        />
+      </ActionMenu.Anchor>
+      <ActionMenu.Overlay width="small">
+        <ActionList>
+          <ActionList.Item disabled={!canManage} onSelect={() => beginRename(id)}>
+            <ActionList.LeadingVisual>
+              <PencilIcon />
+            </ActionList.LeadingVisual>
+            Rename…
+          </ActionList.Item>
+          <ActionList.Item variant="danger" disabled={!canManage} onSelect={() => beginDelete(id)}>
+            <ActionList.LeadingVisual>
+              <TrashIcon />
+            </ActionList.LeadingVisual>
+            Delete…
+          </ActionList.Item>
+        </ActionList>
+      </ActionMenu.Overlay>
+    </ActionMenu>
+  );
+};
 
 /**
  * One deck: a button that opens it, and the kebab beside it — siblings, so

@@ -50,6 +50,13 @@ export type DecksState = {
   /** The last thing the backend said that went wrong, for the list to show. */
   error?: string;
   /**
+   * Whether the reader may rename and delete decks. True unless the host
+   * says otherwise (`configureDecksManagement`): a host with accounts turns
+   * it off for whoever is not an administrator. It gates every way in — the
+   * row's menu, the palette, the keystroke, and the commands an agent calls.
+   */
+  canManage: boolean;
+  /**
    * Bumped whenever someone asks to *see* decks — a deck opened, the list
    * shown — even when nothing else changed. A host with its own notion of
    * what is on screen (a Loop with the deck as one editor among several)
@@ -59,7 +66,12 @@ export type DecksState = {
   revealed: number;
 };
 
-let state: DecksState = { slide: 1, creating: false, revealed: 0 };
+const FIRST_FRAME: DecksState = { slide: 1, creating: false, revealed: 0, canManage: true };
+
+let state: DecksState = FIRST_FRAME;
+
+/** What a reader who may not manage decks is told, wherever they tried from. */
+export const DECKS_MANAGEMENT_REFUSAL = 'Only an administrator can rename or delete a deck.';
 const listeners = new Set<() => void>();
 
 const set = (patch: Partial<DecksState>): void => {
@@ -103,6 +115,10 @@ export const beginNewDeck = (): void => set({ creating: true });
 export const cancelNewDeck = (): void => set({ creating: false });
 /** Open the rename dialog for a deck — the open one when none is named. */
 export const beginRename = (id?: string): void => {
+  if (!state.canManage) {
+    set({ error: DECKS_MANAGEMENT_REFUSAL });
+    return;
+  }
   const target = id ?? state.selected;
   if (target && deckById(target)) {
     set({ renaming: target });
@@ -111,6 +127,10 @@ export const beginRename = (id?: string): void => {
 export const cancelRename = (): void => set({ renaming: undefined });
 /** Open the delete confirmation for a deck — the open one when none is named. */
 export const beginDelete = (id?: string): void => {
+  if (!state.canManage) {
+    set({ error: DECKS_MANAGEMENT_REFUSAL });
+    return;
+  }
   const target = id ?? state.selected;
   if (target && deckById(target)) {
     set({ deleting: target });
@@ -119,10 +139,23 @@ export const beginDelete = (id?: string): void => {
 export const cancelDelete = (): void => set({ deleting: undefined });
 export const configureDecksBackend = (backendUrl: string | undefined): void =>
   set({ backendUrl: backendUrl?.replace(/\/+$/, '') || undefined });
+/**
+ * Say whether the reader may rename and delete decks. A host calls it when
+ * it knows who is reading; a dialog already open for someone who may not is
+ * closed.
+ */
+export const configureDecksManagement = (allowed: boolean): void => {
+  if (state.canManage === allowed) {
+    return;
+  }
+  set(
+    allowed ? { canManage: true } : { canManage: false, renaming: undefined, deleting: undefined },
+  );
+};
 
 /** For tests: back to the first frame. */
 export const resetDecksState = (): void => {
-  state = { slide: 1, creating: false, revealed: 0 };
+  state = FIRST_FRAME;
   listeners.forEach((listener) => listener());
 };
 
@@ -368,6 +401,9 @@ export type RenameInput = {
  * a backend that is down leaves a message in the list, as every write does.
  */
 export const renameDeck = async (id: string, input: RenameInput): Promise<DeckWriteResult> => {
+  if (!state.canManage) {
+    throw new Error(DECKS_MANAGEMENT_REFUSAL);
+  }
   const current = deckById(id);
   if (!current) {
     throw new Error(`There is no deck ${id} to rename.`);
@@ -384,6 +420,9 @@ export const renameDeck = async (id: string, input: RenameInput): Promise<DeckWr
 
 /** Remove a deck from the catalog, and from the server when there is one. */
 export const removeDeck = async (id: string): Promise<boolean> => {
+  if (!state.canManage) {
+    throw new Error(DECKS_MANAGEMENT_REFUSAL);
+  }
   if (!deckById(id)) {
     return false;
   }
