@@ -21,7 +21,7 @@ import {
   KebabHorizontalIcon,
   PencilIcon,
   PlusIcon,
-  ProjectIcon,
+  ProjectRoadmapIcon,
   TrashIcon,
 } from '@primer/octicons-react';
 import { deckId, type DeckEntry } from '../registry/catalog';
@@ -121,7 +121,7 @@ const DeckRow = ({ entry, selected }: { entry: DeckEntry; selected: boolean }): 
         }}
       >
         <Box sx={{ display: 'flex', color: 'fg.muted', flex: '0 0 auto' }}>
-          <ProjectIcon />
+          <ProjectRoadmapIcon />
         </Box>
         <Box
           sx={{
