@@ -22,6 +22,8 @@ export * from './templates';
 export * from './runtime/DeckRenderer';
 export * from './runtime/SlideRenderer';
 export * from './DeckView';
+export * from './DeckPlayback';
+export * from './narration';
 export * from './DeckPrintView';
 export * from './DeckAccess';
 export * from './deckThemeOverride';

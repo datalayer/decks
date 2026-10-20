@@ -14,11 +14,24 @@
 
 import type { JSX } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Box, Button, Heading, Text } from '@primer/react';
+import { Box, Button, Flash, Heading, Text } from '@primer/react';
 import { themeConfigs, type ColorMode, type ThemeVariant } from '@datalayer/primer-addons';
-import { DownloadIcon, ScreenFullIcon, ScreenNormalIcon } from '@primer/octicons-react';
+import {
+  DownloadIcon,
+  NoteIcon,
+  PauseIcon,
+  PlayIcon,
+  ScreenFullIcon,
+  ScreenNormalIcon,
+  SquareFillIcon,
+} from '@primer/octicons-react';
+import type { RevealApi } from 'reveal.js';
 import { DeckRenderer } from './runtime/DeckRenderer';
-import { useDecksTheme } from './host';
+import { useDecksHost, useDecksNarrator, useDecksTheme } from './host';
+import { PlaybackCaptions, SpeakerNotes, useDeckPlayback } from './DeckPlayback';
+import { SILENT_SLIDE_MS } from './narration';
+
+const SILENT_SECONDS = Math.round(SILENT_SLIDE_MS / 1000);
 import { setDeckThemeOverride } from './deckThemeOverride';
 import type { DeckSpec } from './types';
 
@@ -156,6 +169,47 @@ export const DeckView = ({
   const [full, toggleFullscreen] = useFullscreen(frame);
   useDeckTheme(spec);
 
+  // The running deck and its element, once Reveal is ready: playing moves
+  // it, and the captions and presenting notes are drawn inside it.
+  const api = useRef<RevealApi | null>(null);
+  const [deckElement, setDeckElement] = useState<HTMLElement | null>(null);
+  const onDeck = useCallback((deck: RevealApi | null) => {
+    api.current = deck;
+    setDeckElement(deck ? ((deck.getRevealElement() as HTMLElement | undefined) ?? null) : null);
+  }, []);
+
+  // The slide on screen, 0-based: the speaker notes shown are its notes.
+  const [index, setIndex] = useState(Math.max(0, (slide ?? 1) - 1));
+  useEffect(() => {
+    if (slide) {
+      setIndex(Math.min(spec.slides.length - 1, Math.max(0, slide - 1)));
+    }
+  }, [slide, spec.slides.length]);
+
+  const [notesShown, setNotesShown] = useState(false);
+  const narrator = useDecksNarrator();
+  const { signIn } = useDecksHost();
+  const playback = useDeckPlayback(spec, narrator, api);
+  const [explained, setExplained] = useState(false);
+  const playing = playback.state.status === 'playing';
+  const paused = playback.state.status === 'paused';
+  const onPlay = () => {
+    if (narrator?.unavailable) {
+      setExplained(true);
+      return;
+    }
+    setExplained(false);
+    playback.play(api.current?.getIndices().h ?? index);
+  };
+  const changed = useCallback(
+    (next: number) => {
+      setIndex(next - 1);
+      playback.moved(next - 1);
+      onSlideChange?.(next);
+    },
+    [onSlideChange, playback.moved],
+  );
+
   return (
     // The same column the header and the home page keep to: 1280 wide,
     // centred, with the page gutter. The layout hands a view the full
@@ -189,7 +243,14 @@ export const DeckView = ({
             <Text sx={{ color: 'fg.muted', fontSize: 1 }}>{spec.deck.subtitle}</Text>
           )}
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            leadingVisual={NoteIcon}
+            aria-pressed={notesShown}
+            onClick={() => setNotesShown(shown => !shown)}
+          >
+            {notesShown ? 'Hide notes' : 'Notes'}
+          </Button>
           {printPath && (
             <Button
               leadingVisual={DownloadIcon}
@@ -198,6 +259,24 @@ export const DeckView = ({
               Download PDF
             </Button>
           )}
+          {narrator &&
+            (playing || paused ? (
+              <>
+                <Button
+                  leadingVisual={paused ? PlayIcon : PauseIcon}
+                  onClick={paused ? playback.resume : playback.pause}
+                >
+                  {paused ? 'Resume' : 'Pause'}
+                </Button>
+                <Button leadingVisual={SquareFillIcon} onClick={playback.stop}>
+                  Stop
+                </Button>
+              </>
+            ) : (
+              <Button leadingVisual={PlayIcon} onClick={onPlay}>
+                Play
+              </Button>
+            ))}
           <Button
             leadingVisual={full ? ScreenNormalIcon : ScreenFullIcon}
             onClick={toggleFullscreen}
@@ -207,19 +286,57 @@ export const DeckView = ({
         </Box>
       </Box>
 
+      {narrator && explained && narrator.unavailable && (
+        <Flash variant="warning" sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Text sx={{ flex: 1 }}>{narrator.unavailable}</Text>
+          {narrator.needsSignIn && signIn && (
+            <Button
+              size="small"
+              onClick={() => signIn(window.location.pathname + window.location.search)}
+            >
+              Sign in
+            </Button>
+          )}
+        </Flash>
+      )}
+      {playback.state.status === 'refused' && (
+        <Flash variant="danger">
+          Playing stopped: {playback.state.reason}
+        </Flash>
+      )}
+      {playback.state.status === 'ended' && (
+        <Text sx={{ color: 'fg.muted', fontSize: 1 }}>Played to the last slide.</Text>
+      )}
+
       <DeckRenderer
         spec={spec}
+        deckRef={onDeck}
         frameRef={frame}
         chrome={chrome}
         slide={slide}
-        onSlideChange={onSlideChange}
+        onSlideChange={changed}
       />
+      <PlaybackCaptions state={playback.state} target={deckElement} />
+      {notesShown && !(full && (playing || paused)) && (
+        <SpeakerNotes
+          notes={spec.slides[index]?.notes}
+          presenting={full}
+          target={deckElement}
+        />
+      )}
 
       <Text sx={{ color: 'fg.muted', fontSize: 0, textAlign: 'center' }}>
         Click the deck to steer it, then arrow keys or space to move ·{' '}
         <strong>f</strong> or Present for fullscreen · <strong>o</strong> for the
         overview · <strong>?</strong> for the rest · Download PDF opens the print
-        dialog, where “Save as PDF” keeps the text and the links
+        dialog, where “Save as PDF” keeps the text and the links · Notes shows the
+        speaker notes{narrator ? (
+          <>
+            {' '}
+            · Play reads them aloud, slide after slide, as captions (space pauses,
+            Escape stops; a slide without notes stays {SILENT_SECONDS} seconds)
+          </>
+        ) : null}
       </Text>
     </Box>
   );

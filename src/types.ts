@@ -73,14 +73,15 @@ export type SlideBase = {
   title?: string;
   subtitle?: string;
   /**
-   * Speaker notes.
+   * Speaker notes, on every slide type: the argument the slide is making, the
+   * slide being only the evidence.
    *
-   * Carried to Reveal as `data-notes` on the slide, where its notes plugin or
-   * `showNotes` would pick them up. Neither is registered here — the notes
-   * plugin opens a speaker window by fetching an HTML file relative to its own
-   * script, which a bundled build does not serve — so today these are read in
-   * the spec rather than on screen. Written anyway: they are the argument the
-   * slide is making, and the slide is only the evidence.
+   * Shown to the presenter by the reading view's *Notes* button — under the
+   * deck, or over its bottom edge while presenting — and read aloud, as
+   * captions, by *Play* when the host gives a voice (`DecksHost.useNarrator`).
+   * Never printed: the print view draws the slides alone. Also carried to
+   * Reveal as `data-notes`; its notes plugin is not registered, because it
+   * opens a speaker window from an HTML file a bundled build does not serve.
    */
   notes?: string;
   layout?: SlideLayout;

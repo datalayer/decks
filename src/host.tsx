@@ -51,6 +51,47 @@ export type DeckLogoProps = {
   textColor?: string;
 };
 
+/** What a narrator tells the deck while it reads a slide's notes. */
+export type NarrationCallbacks = {
+  /** The voice began the sentence at this index of those it was given. */
+  onSentence: (index: number) => void;
+  /** The voice said the last of them. */
+  onEnd: () => void;
+  /** It could not say them; `reason` is shown to the reader as it is. */
+  onRefused: (reason: string) => void;
+};
+
+/**
+ * The voice that plays a deck (the *Play* button): it reads each slide's
+ * speaker notes aloud while the deck shows them as captions.
+ *
+ * The engine has no voice of its own; a host that has one gives it here, and
+ * a host that gives none shows no *Play* button. A host whose voice cannot
+ * speak for this reader — not signed in, say — still gives a narrator, with
+ * `unavailable` saying why, and *Play* says that rather than playing.
+ */
+export type DeckNarrator = {
+  /** Why playing cannot speak here, in a sentence the reader is shown. */
+  unavailable?: string;
+  /** With `unavailable`: signing in is the way out, so offer it. */
+  needsSignIn?: boolean;
+  /**
+   * A slide's notes as the sentences to show and say — the host's own cutter,
+   * so that the captions are exactly what its voice says. The engine's
+   * `noteSentences` when absent.
+   */
+  sentences?: (notes: string | undefined) => string[];
+  /** Called from the press on *Play*: a browser plays sound only after a gesture. */
+  unlock?: () => void;
+  /**
+   * Say these sentences in order, replacing whatever was being said, and tell
+   * the deck as each begins and when the last has ended.
+   */
+  speak: (sentences: string[], events: NarrationCallbacks) => void;
+  /** Stop at once. No callback of the last `speak` may arrive afterwards. */
+  stop: () => void;
+};
+
 export type DecksHost = {
   /**
    * The theme the page is wearing. A hook, because it changes while a deck
@@ -66,6 +107,13 @@ export type DecksHost = {
   signIn?: (returnTo: string) => void;
   /** Navigate within the host's application. Defaults to a full page load. */
   navigate?: (to: string) => void;
+  /**
+   * The voice that plays a deck, read once per deck view. A hook, because the
+   * narrator depends on who is reading (a token) and may change with them.
+   * Keep it the same object between renders (memoise it): a new one restarts
+   * the slide being read. Absent, the deck has no *Play* button.
+   */
+  useNarrator?: () => DeckNarrator | undefined;
 };
 
 const useDefaultTheme = (): DecksTheme => {
@@ -95,6 +143,14 @@ export const useDecksHost = (): DecksHost => useContext(DecksHostContext);
 export const useDecksTheme = (): DecksTheme => {
   const { useTheme } = useDecksHost();
   return useTheme();
+};
+
+const useNoNarrator = (): DeckNarrator | undefined => undefined;
+
+/** The host's narrator, or none. */
+export const useDecksNarrator = (): DeckNarrator | undefined => {
+  const { useNarrator } = useDecksHost();
+  return (useNarrator ?? useNoNarrator)();
 };
 
 /** Where to go, through the host if it said, or by loading the page. */

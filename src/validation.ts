@@ -111,6 +111,13 @@ export const validateDeck = (spec: DeckSpec): DeckIssue[] => {
       return;
     }
 
+    // Speaker notes are text, on any slide: shown to the presenter and read
+    // aloud by Play, so a list or an object there would be neither.
+    const notes = (slide as { notes?: unknown }).notes;
+    if (notes !== undefined && typeof notes !== 'string') {
+      issues.push({ where, message: 'A slide’s `notes` are text (a string).' });
+    }
+
     for (const field of REQUIRED[slide.type] ?? []) {
       if (isEmpty((slide as unknown as Record<string, unknown>)[field])) {
         issues.push({
