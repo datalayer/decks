@@ -15,4 +15,5 @@ export * from './timeline';
 export * from './vtt';
 export * from './captions';
 export * from './record';
+export * from './sound';
 export * from './DeckVideoPanel';

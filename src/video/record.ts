@@ -19,7 +19,9 @@
  *    same stream, and `MediaRecorder` records both: MP4 where the browser
  *    records MP4, WebM otherwise. In real time; a timer in a worker keeps the
  *    frames coming while the tab is in the background, where the page's own
- *    timers and animation frames are held back.
+ *    timers and animation frames are held back. The sentences sound through
+ *    the speakers too (`sound.ts`): the reader hears what is recorded, and
+ *    *Sound off* silences the speakers only.
  *
  * The captions file (`vtt.ts`) is written from the same timeline.
  *
@@ -30,6 +32,7 @@ import { getFontEmbedCSS, toCanvas } from 'html-to-image';
 import type { RevealApi } from 'reveal.js';
 import type { DeckNarrator } from '../host';
 import { fitCaption } from './captions';
+import { narrationBus } from './sound';
 import { buildTimeline, frameAt, type VideoTimeline } from './timeline';
 import { toVtt } from './vtt';
 
@@ -372,6 +375,7 @@ const recordTimeline = async ({
   audio,
   font,
   mimeType,
+  speakers,
   signal,
   onProgress,
 }: {
@@ -381,6 +385,7 @@ const recordTimeline = async ({
   audio: AudioContext;
   font: string;
   mimeType: string;
+  speakers?: AudioNode;
   signal: AbortSignal;
   onProgress: (progress: VideoProgress) => void;
 }): Promise<Blob> => {
@@ -394,6 +399,8 @@ const recordTimeline = async ({
   // Frames on demand: one per tick, whether or not the tab is shown.
   const track = canvas.captureStream(0).getVideoTracks()[0] as CanvasCaptureMediaStreamTrack;
   const sound = audio.createMediaStreamDestination();
+  // Recorded, and heard through the speakers' gain (*Sound on/off*).
+  const bus = narrationBus(audio, sound, speakers);
   const recorder = new MediaRecorder(
     new MediaStream([track, ...sound.stream.getAudioTracks()]),
     { mimeType, videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 128_000 },
@@ -427,7 +434,7 @@ const recordTimeline = async ({
   const sources = timeline.cues.map(cue => {
     const source = audio.createBufferSource();
     source.buffer = voiced[cue.slide][cue.sentence];
-    source.connect(sound);
+    source.connect(bus);
     source.start(start + cue.start);
     return source;
   });
@@ -474,6 +481,7 @@ const recordTimeline = async ({
       }
       source.disconnect();
     });
+    bus.disconnect();
     recorder.stop();
     await stopped;
     track.stop();
@@ -488,6 +496,11 @@ export type MakeDeckVideo = {
   synthesize: NonNullable<DeckNarrator['synthesize']>;
   /** Made from the reader's press on *Video*: a browser plays sound only after a gesture. */
   audio: AudioContext;
+  /**
+   * Where the reader hears the narration (`speakersGain`), its gain being
+   * *Sound on/off*; none, and it is only recorded.
+   */
+  speakers?: AudioNode;
   title: string;
   signal: AbortSignal;
   onProgress: (progress: VideoProgress) => void;
@@ -499,6 +512,7 @@ export const makeDeckVideo = async ({
   script,
   synthesize,
   audio,
+  speakers,
   title,
   signal,
   onProgress,
@@ -525,6 +539,7 @@ export const makeDeckVideo = async ({
     audio,
     font,
     mimeType,
+    speakers,
     signal,
     onProgress,
   });

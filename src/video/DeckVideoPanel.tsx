@@ -7,7 +7,9 @@
 /**
  * What `DeckView` draws for *Video*: `useDeckVideo`, the state of making the
  * deck into a video (`record.ts`), and `DeckVideoPanel`, its progress with
- * *Cancel* while it is made, then the video and its captions to download.
+ * *Sound on/off* and *Cancel* while it is made, then the video and its
+ * captions to download. The narration is heard as it is recorded; *Sound
+ * off* silences the speakers only, never the recording (`sound.ts`).
  *
  * @module video/DeckVideoPanel
  */
@@ -15,12 +17,13 @@
 import type { JSX, RefObject } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Button, Flash, ProgressBar, Text } from '@primer/react';
-import { DownloadIcon, XIcon } from '@primer/octicons-react';
+import { DownloadIcon, MuteIcon, UnmuteIcon, XIcon } from '@primer/octicons-react';
 import type { RevealApi } from 'reveal.js';
 import type { DeckNarrator } from '../host';
 import { noteSentences, scriptOf } from '../narration';
 import type { DeckSpec } from '../types';
 import { makeDeckVideo, VideoCancelled, type VideoProgress } from './record';
+import { setHeard, speakersGain } from './sound';
 import { formatClock, videoFileStem } from './timeline';
 
 export type DeckVideoState =
@@ -41,6 +44,10 @@ export type DeckVideoControl = {
   /** Make the video; called from the press on *Video*. */
   start: () => void;
   cancel: () => void;
+  /** Whether the narration sounds through the speakers while it is recorded. */
+  heard: boolean;
+  /** *Sound on/off*: the speakers only, the recording keeps its sound. */
+  setHeard: (heard: boolean) => void;
   /** Put the result or the failure away, and free the files. */
   dismiss: () => void;
 };
@@ -52,6 +59,9 @@ export const useDeckVideo = (
 ): DeckVideoControl => {
   const [state, setState] = useState<DeckVideoState>({ status: 'idle' });
   const running = useRef<AbortController | null>(null);
+  const [heard, setHeardState] = useState(true);
+  const heardNow = useRef(true);
+  const speakers = useRef<GainNode | null>(null);
   const urls = useRef<string[]>([]);
 
   const free = useCallback(() => {
@@ -70,6 +80,9 @@ export const useDeckVideo = (
     running.current = controller;
     // Made here, in the press: a browser starts sound only after a gesture.
     const audio = new AudioContext();
+    // Resumed in the press too, or the speakers stay silent.
+    void audio.resume();
+    speakers.current = speakersGain(audio, heardNow.current);
     setState({ status: 'making', progress: { phase: 'slides', done: 0, total: spec.slides.length } });
     const title = spec.deck.title;
     void makeDeckVideo({
@@ -77,6 +90,7 @@ export const useDeckVideo = (
       script: scriptOf(spec.slides, narrator?.sentences ?? noteSentences),
       synthesize,
       audio,
+      speakers: speakers.current,
       title,
       signal: controller.signal,
       onProgress: progress => {
@@ -113,11 +127,19 @@ export const useDeckVideo = (
       })
       .finally(() => {
         running.current = null;
+        speakers.current = null;
         void audio.close();
       });
   }, [api, free, narrator, spec]);
 
   const cancel = useCallback(() => running.current?.abort(), []);
+  const hear = useCallback((on: boolean) => {
+    heardNow.current = on;
+    setHeardState(on);
+    if (speakers.current) {
+      setHeard(speakers.current, on);
+    }
+  }, []);
   const dismiss = useCallback(() => {
     free();
     setState({ status: 'idle' });
@@ -132,7 +154,7 @@ export const useDeckVideo = (
     [free],
   );
 
-  return { state, start, cancel, dismiss };
+  return { state, start, cancel, heard, setHeard: hear, dismiss };
 };
 
 const progressText = (progress: VideoProgress): { text: string; percent: number } => {
@@ -162,7 +184,7 @@ const progressText = (progress: VideoProgress): { text: string; percent: number 
 
 /** Making the video, then the files: under the toolbar, never over the deck. */
 export const DeckVideoPanel = ({ control }: { control: DeckVideoControl }): JSX.Element | null => {
-  const { state, cancel, dismiss } = control;
+  const { state, cancel, dismiss, heard, setHeard: hear } = control;
   if (state.status === 'making') {
     const { text, percent } = progressText(state.progress);
     return (
@@ -182,6 +204,18 @@ export const DeckVideoPanel = ({ control }: { control: DeckVideoControl }): JSX.
           <Text sx={{ fontSize: 1 }}>{text}</Text>
           <ProgressBar progress={percent} aria-label="Making the video" />
         </Box>
+        <Button
+          leadingVisual={heard ? UnmuteIcon : MuteIcon}
+          aria-pressed={!heard}
+          title={
+            heard
+              ? 'Silence the speakers; the video keeps its sound'
+              : 'Hear the narration as it is recorded'
+          }
+          onClick={() => hear(!heard)}
+        >
+          {heard ? 'Sound on' : 'Sound off'}
+        </Button>
         <Button leadingVisual={XIcon} onClick={cancel}>
           Cancel
         </Button>
