@@ -177,31 +177,158 @@ export type NewDeckInput = {
 };
 
 /**
- * The spec a new deck starts as: a title slide and one section to replace.
- *
- * Small on purpose. A deck is written as data, and the useful thing a "new"
- * command can do is produce a valid document with the author's title on it —
- * not guess at content.
+ * The spec a new deck starts as: the author's title on a short tour of the
+ * slides worth starting from — a section, bullets, metrics, a chart, a
+ * diagram, a timeline, a statement and a closing — each with speaker notes,
+ * so *Play* and *Video* have something to say from the first minute. The
+ * same starter the server writes for a deck created without a file.
  */
 export const newDeckSpec = ({ title, subtitle, template }: NewDeckInput): DeckSpec => {
-  const slides: SlideSpec[] = [
+  const slides = [
     {
+      id: 'title',
       type: 'title',
       title,
-      subtitle,
-      meta: new Date().toISOString().slice(0, 10),
+      subtitle: 'A presentation described as data',
+      notes: `Welcome to ${title}. This starter shows what a deck can hold. Every slide carries speaker notes like these: Play reads them aloud as captions, and Video turns them into a narrated video.`,
     },
-    { type: 'section', title: 'First section' },
     {
+      id: 'how',
+      type: 'section',
+      title: 'How this deck works',
+      subtitle: 'Each slide is data: a kind, its content, and its notes.',
+      notes:
+        'A deck is written as data, not drawn. You choose the kind of slide that matches what you want to say, and the template takes care of the look.',
+    },
+    {
+      id: 'start',
       type: 'bullets',
       title: 'Where to start',
-      items: ['Replace this slide', 'Add a `metrics` or `chart` slide', 'Present with `f`'],
+      icon: 'check',
+      fragments: true,
+      items: [
+        'Replace these slides with your story',
+        "Write what you will say in each slide's notes",
+        'Press Play to rehearse, Video to share',
+      ],
+      notes:
+        "Three steps. Replace these slides with your own story. Write what you would say in each slide's notes. Then press Play to rehearse it, or Video to share it.",
     },
-  ];
+    {
+      id: 'numbers',
+      type: 'metrics',
+      title: 'Numbers get room to breathe',
+      metrics: [
+        {
+          value: '3',
+          label: 'minutes',
+          detail: 'a good length for a video',
+        },
+        {
+          value: '9',
+          label: 'slides',
+          detail: 'in this starter',
+        },
+        {
+          value: '1',
+          label: 'file',
+          detail: 'content, notes and order',
+        },
+      ],
+      notes:
+        'Numbers get a slide of their own. Three minutes is a good length for a deck shared as a video: about nine slides, all in one file.',
+    },
+    {
+      id: 'chart',
+      type: 'chart',
+      title: 'A chart, without a charting tool',
+      subtitle: 'Bars when the shape of the comparison is the message.',
+      max: 100,
+      series: [
+        {
+          label: 'Your story',
+          value: 70,
+          display: '70%',
+        },
+        {
+          label: 'Your evidence',
+          value: 25,
+          display: '25%',
+        },
+        {
+          label: 'Layout',
+          value: 5,
+          display: '5%',
+        },
+      ],
+      caption: 'Illustrative values: replace them with yours.',
+      notes:
+        'When the shape of a comparison is the message, use a chart. Here, most of the time goes to the story and the evidence, and almost none to layout. These values are illustrative: replace them with yours.',
+    },
+    {
+      id: 'diagram',
+      type: 'mermaid',
+      title: 'From notes to a video',
+      diagram:
+        'flowchart LR\n  N[Notes] --> P[Play]\n  N --> V[Video]\n  V --> L[Library]\n  L --> S[Shared link]',
+      caption: 'A diagram is written as text, and drawn for you.',
+      notes:
+        'Diagrams are written as text and drawn for you. Your notes feed both Play and Video; a video published to the Library plays on its page, and its link previews as the video wherever you share it.',
+    },
+    {
+      id: 'steps',
+      type: 'timeline',
+      title: 'From idea to audience',
+      items: [
+        {
+          when: '01',
+          title: 'Outline',
+          detail: 'Pick the story and the kind of each slide.',
+        },
+        {
+          when: '02',
+          title: 'Write',
+          detail: 'Content on the slides, voice in the notes.',
+        },
+        {
+          when: '03',
+          title: 'Rehearse',
+          detail: 'Play reads the notes aloud.',
+          current: true,
+        },
+        {
+          when: '04',
+          title: 'Share',
+          detail: 'Present live, or publish the video.',
+        },
+      ],
+      notes:
+        'A timeline shows the steps in order. Outline, write, rehearse with Play, and share: present it live, or publish the video.',
+    },
+    {
+      id: 'statement',
+      type: 'statement',
+      statement: 'The specification owns the content. The template owns the pixels.',
+      attribution: 'Change the template to change the look of the whole deck.',
+      notes:
+        'One sentence can be a slide. The specification owns the content, the template owns the pixels: change the template, and the whole deck changes its look.',
+    },
+    {
+      id: 'close',
+      type: 'closing',
+      title: 'Your turn',
+      cta: 'Replace these slides with your story',
+      notes:
+        'That is the tour. Replace these slides with your story, write what you will say in the notes, and press Play.',
+    },
+  ] as SlideSpec[];
+  if (subtitle) {
+    slides[0] = { ...slides[0], subtitle } as SlideSpec;
+  }
   return {
     deck: {
       title,
-      subtitle,
+      subtitle: subtitle ?? 'A presentation described as data',
       template: template ?? 'datalayer',
       transition: 'slide',
     },
