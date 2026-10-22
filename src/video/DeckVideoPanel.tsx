@@ -14,6 +14,11 @@
  * recorded, its sentence as a caption (`following`) — and goes back to where
  * the reader was at the end.
  *
+ * A host that keeps the video somewhere — the landing, on a published deck's
+ * Library page, for its owner — passes a `DeckVideoPublisher`: *Video* then
+ * reads as the publisher's label, and the video is handed to it as soon as it
+ * is made, the files still offered for download.
+ *
  * @module video/DeckVideoPanel
  */
 
@@ -25,9 +30,34 @@ import type { RevealApi } from 'reveal.js';
 import type { DeckNarrator } from '../host';
 import { noteSentences, scriptOf, type NarrationState } from '../narration';
 import type { DeckSpec } from '../types';
-import { makeDeckVideo, showWhole, VideoCancelled, type VideoProgress } from './record';
+import {
+  makeDeckVideo,
+  showWhole,
+  VideoCancelled,
+  type DeckVideo,
+  type VideoProgress,
+} from './record';
 import { setHeard, speakersGain } from './sound';
 import { formatClock, videoFileStem } from './timeline';
+
+/** Where a host keeps the video once it is made. */
+export type DeckVideoPublisher = {
+  /** What *Video* reads instead, e.g. "Make the video". */
+  label: string;
+  /**
+   * Keep the video, its captions and its poster. Rejects with an `Error`
+   * whose message is shown to the reader as it is.
+   */
+  publish: (made: DeckVideo) => Promise<void>;
+  /** Said once it is kept, e.g. "It now plays on the deck's Library page." */
+  published: string;
+};
+
+/** Where handing the video to the publisher is. */
+export type DeckVideoKept =
+  | { status: 'keeping' }
+  | { status: 'kept' }
+  | { status: 'refused'; reason: string };
 
 export type DeckVideoState =
   | { status: 'idle' }
@@ -39,8 +69,30 @@ export type DeckVideoState =
       captionsUrl: string;
       captionsName: string;
       duration: number;
+      /** With a publisher: whether it has the video yet. */
+      kept?: DeckVideoKept;
     }
   | { status: 'failed'; reason: string };
+
+/** What the panel says when the video is done. */
+export const doneText = (
+  duration: number,
+  kept: DeckVideoKept | undefined,
+  publisher: DeckVideoPublisher | undefined,
+): string => {
+  const made = `The video is ready: ${formatClock(duration)}, with its captions.`;
+  if (!kept || !publisher) {
+    return made;
+  }
+  switch (kept.status) {
+    case 'keeping':
+      return `${made} Uploading it…`;
+    case 'kept':
+      return `${made} ${publisher.published}`;
+    case 'refused':
+      return `${made} It could not be uploaded: ${kept.reason}`;
+  }
+};
 
 export type DeckVideoControl = {
   state: DeckVideoState;
@@ -58,12 +110,17 @@ export type DeckVideoControl = {
   following?: NarrationState;
   /** Put the result or the failure away, and free the files. */
   dismiss: () => void;
+  /** The host's publisher, when it keeps the video. */
+  publisher?: DeckVideoPublisher;
+  /** Hand the video made to the publisher again, after it refused it. */
+  keep: () => void;
 };
 
 export const useDeckVideo = (
   spec: DeckSpec,
   narrator: DeckNarrator | undefined,
   api: RefObject<RevealApi | null>,
+  publisher?: DeckVideoPublisher,
 ): DeckVideoControl => {
   const [state, setState] = useState<DeckVideoState>({ status: 'idle' });
   const running = useRef<AbortController | null>(null);
@@ -72,10 +129,36 @@ export const useDeckVideo = (
   const speakers = useRef<GainNode | null>(null);
   const [script, setScript] = useState<string[][]>([]);
   const urls = useRef<string[]>([]);
+  const made = useRef<DeckVideo | null>(null);
+  const publishing = useRef(publisher);
+  publishing.current = publisher;
 
   const free = useCallback(() => {
     urls.current.forEach(url => URL.revokeObjectURL(url));
     urls.current = [];
+    made.current = null;
+  }, []);
+
+  const keep = useCallback(() => {
+    const video = made.current;
+    const keeper = publishing.current;
+    if (!video || !keeper) {
+      return;
+    }
+    const settle = (kept: DeckVideoKept) =>
+      setState(current =>
+        current.status === 'done' && made.current === video ? { ...current, kept } : current,
+      );
+    settle({ status: 'keeping' });
+    keeper
+      .publish(video)
+      .then(() => settle({ status: 'kept' }))
+      .catch((error: unknown) =>
+        settle({
+          status: 'refused',
+          reason: error instanceof Error ? error.message : String(error),
+        }),
+      );
   }, []);
 
   const start = useCallback(() => {
@@ -120,21 +203,23 @@ export const useDeckVideo = (
         setState({ status: 'making', progress });
       },
     })
-      .then(made => {
+      .then(video => {
         const stem = videoFileStem(title);
-        const videoUrl = URL.createObjectURL(made.video);
+        const videoUrl = URL.createObjectURL(video.video);
         const captionsUrl = URL.createObjectURL(
-          new Blob([made.vtt], { type: 'text/vtt;charset=utf-8' }),
+          new Blob([video.vtt], { type: 'text/vtt;charset=utf-8' }),
         );
         urls.current = [videoUrl, captionsUrl];
+        made.current = video;
         setState({
           status: 'done',
           videoUrl,
-          videoName: `${stem}.${made.extension}`,
+          videoName: `${stem}.${video.extension}`,
           captionsUrl,
           captionsName: `${stem}.vtt`,
-          duration: made.timeline.duration,
+          duration: video.timeline.duration,
         });
+        keep();
       })
       .catch((error: unknown) => {
         setState(
@@ -158,7 +243,7 @@ export const useDeckVideo = (
         }
         void audio.close();
       });
-  }, [api, free, narrator, spec]);
+  }, [api, free, keep, narrator, spec]);
 
   const cancel = useCallback(() => running.current?.abort(), []);
   const hear = useCallback((on: boolean) => {
@@ -193,7 +278,7 @@ export const useDeckVideo = (
         }
       : undefined;
 
-  return { state, start, cancel, heard, setHeard: hear, following, dismiss };
+  return { state, start, cancel, heard, setHeard: hear, following, dismiss, publisher, keep };
 };
 
 const progressText = (progress: VideoProgress): { text: string; percent: number } => {
@@ -223,7 +308,7 @@ const progressText = (progress: VideoProgress): { text: string; percent: number 
 
 /** Making the video, then the files: under the toolbar, never over the deck. */
 export const DeckVideoPanel = ({ control }: { control: DeckVideoControl }): JSX.Element | null => {
-  const { state, cancel, dismiss, heard, setHeard: hear } = control;
+  const { state, cancel, dismiss, heard, setHeard: hear, publisher, keep } = control;
   if (state.status === 'making') {
     const { text, percent } = progressText(state.progress);
     return (
@@ -270,13 +355,17 @@ export const DeckVideoPanel = ({ control }: { control: DeckVideoControl }): JSX.
     };
     return (
       <Flash
-        variant="success"
+        variant={state.kept?.status === 'refused' ? 'warning' : 'success'}
         data-deck-video="done"
+        data-deck-video-kept={state.kept?.status}
         sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}
       >
-        <Text sx={{ flex: 1 }}>
-          The video is ready: {formatClock(state.duration)}, with its captions.
-        </Text>
+        <Text sx={{ flex: 1 }}>{doneText(state.duration, state.kept, publisher)}</Text>
+        {state.kept?.status === 'refused' && (
+          <Button size="small" onClick={keep}>
+            Upload again
+          </Button>
+        )}
         <Button
           size="small"
           leadingVisual={DownloadIcon}

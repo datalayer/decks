@@ -89,8 +89,23 @@ export type DeckVideo = {
   extension: 'mp4' | 'webm';
   /** The captions, as a WebVTT file. */
   vtt: string;
+  /**
+   * The first slide as the video draws it, 1920×1080, without a caption: a
+   * PNG for the video's poster and the picture its shared link shows.
+   */
+  poster: Blob;
   timeline: VideoTimeline;
 };
+
+/** A picture as a PNG file. */
+export const pngOf = (picture: HTMLCanvasElement): Promise<Blob> =>
+  new Promise((resolve, reject) =>
+    picture.toBlob(
+      blob =>
+        blob ? resolve(blob) : reject(new Error('The first slide could not be made a picture.')),
+      'image/png',
+    ),
+  );
 
 /** Thrown when the reader cancelled; nothing is said about it. */
 export class VideoCancelled extends Error {
@@ -535,6 +550,7 @@ export const makeDeckVideo = async ({
     (element && getComputedStyle(element).getPropertyValue('--dla-deck-font').trim()) ||
     'system-ui, sans-serif';
   const pictures = await drawSlides(deck, script.length, signal, onProgress);
+  const poster = await pngOf(pictures[0]);
   const voiced = await voiceScript(script, synthesize, audio, signal, onProgress);
   check(signal);
   const timeline = buildTimeline(
@@ -556,6 +572,7 @@ export const makeDeckVideo = async ({
     video,
     extension: mimeType.startsWith('video/mp4') ? 'mp4' : 'webm',
     vtt: toVtt(timeline.cues, title),
+    poster,
     timeline,
   };
 };

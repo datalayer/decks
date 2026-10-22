@@ -31,7 +31,11 @@ import { DeckRenderer } from './runtime/DeckRenderer';
 import { useDecksHost, useDecksNarrator, useDecksTheme } from './host';
 import { PlaybackCaptions, SpeakerNotes, useDeckPlayback } from './DeckPlayback';
 import { SILENT_SLIDE_MS } from './narration';
-import { DeckVideoPanel, useDeckVideo } from './video/DeckVideoPanel';
+import {
+  DeckVideoPanel,
+  useDeckVideo,
+  type DeckVideoPublisher,
+} from './video/DeckVideoPanel';
 
 const SILENT_SECONDS = Math.round(SILENT_SLIDE_MS / 1000);
 import { setDeckThemeOverride } from './deckThemeOverride';
@@ -117,6 +121,11 @@ type DeckViewProps = {
   slide?: number;
   /** The reader moved to another slide. */
   onSlideChange?: (slide: number) => void;
+  /**
+   * Where the video *Video* makes is kept, when the host keeps it: *Video*
+   * reads as its label and hands it the video once made.
+   */
+  videoPublisher?: DeckVideoPublisher;
 };
 
 /**
@@ -165,6 +174,7 @@ export const DeckView = ({
   printPath,
   slide,
   onSlideChange,
+  videoPublisher,
 }: DeckViewProps): JSX.Element => {
   const frame = useRef<HTMLDivElement>(null);
   const chrome = useChromeHeight(frame);
@@ -192,7 +202,7 @@ export const DeckView = ({
   const narrator = useDecksNarrator();
   const { signIn } = useDecksHost();
   const playback = useDeckPlayback(spec, narrator, api);
-  const video = useDeckVideo(spec, narrator, api);
+  const video = useDeckVideo(spec, narrator, api, videoPublisher);
   const [explained, setExplained] = useState(false);
   const playing = playback.state.status === 'playing';
   const paused = playback.state.status === 'paused';
@@ -296,7 +306,7 @@ export const DeckView = ({
               onClick={onVideo}
               disabled={making || playing || paused}
             >
-              Video
+              {videoPublisher?.label ?? 'Video'}
             </Button>
           )}
           <Button

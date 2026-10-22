@@ -114,6 +114,13 @@ presenter (never in the PDF). When the host gives a voice
   **Sound off** silences the speakers only, the video keeps its sound. Then it offers the video and a WebVTT
   captions file with the same sentences and timings, named after the deck.
 
+A host that keeps the video passes `DeckView` a `videoPublisher`
+(`DeckVideoPublisher`: a `label`, `publish(made)`, and what to say once
+`published`). **Video** then reads as the label, and the video — with its
+captions and `poster`, the first slide as a 1920×1080 PNG — is handed to
+`publish` as soon as it is made; a refusal shows its reason with **Upload
+again**. The landing does this for a deck's owner on its Library page.
+
 A narrator without `synthesize` gives no **Video** button. A narrator that
 cannot speak for this reader (`unavailable`, with `needsSignIn` when signing
 in is the way out) has both buttons say why rather than play or record.
