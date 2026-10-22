@@ -340,6 +340,7 @@ export const DeckView = ({
         onSlideChange={changed}
       />
       <PlaybackCaptions state={playback.state} target={deckElement} />
+      {video.following && <PlaybackCaptions state={video.following} target={deckElement} />}
       {notesShown && !(full && (playing || paused)) && (
         <SpeakerNotes
           notes={spec.slides[index]?.notes}

@@ -33,7 +33,7 @@ import type { RevealApi } from 'reveal.js';
 import type { DeckNarrator } from '../host';
 import { fitCaption } from './captions';
 import { narrationBus } from './sound';
-import { buildTimeline, frameAt, type VideoTimeline } from './timeline';
+import { buildTimeline, followAt, frameAt, type VideoTimeline } from './timeline';
 import { toVtt } from './vtt';
 
 export const VIDEO_WIDTH = 1920;
@@ -73,7 +73,15 @@ export const videoMimeType = (): string | undefined =>
 export type VideoProgress =
   | { phase: 'slides'; done: number; total: number }
   | { phase: 'voice'; done: number; total: number }
-  | { phase: 'recording'; slide: number; slides: number; time: number; duration: number };
+  | {
+      phase: 'recording';
+      slide: number;
+      /** The sentence being said on that slide, or the last one said (`followAt`). */
+      sentence: number;
+      slides: number;
+      time: number;
+      duration: number;
+    };
 
 export type DeckVideo = {
   video: Blob;
@@ -159,8 +167,8 @@ const paintBehind = (element: HTMLElement): string => {
   return '#ffffff';
 };
 
-/** Move the deck to a slide at once, every fragment shown. */
-const showWhole = (deck: RevealApi, index: number): HTMLElement => {
+/** Move the deck to a slide at once, every fragment shown: as the video shows it. */
+export const showWhole = (deck: RevealApi, index: number): HTMLElement => {
   deck.slide(index, 0);
   const section = deck.getCurrentSlide() as HTMLElement;
   const fragments = [...section.querySelectorAll('.fragment')]
@@ -460,6 +468,7 @@ const recordTimeline = async ({
           onProgress({
             phase: 'recording',
             slide: frame.slide,
+            sentence: followAt(timeline, time).sentence,
             slides: timeline.slides.length,
             time: Math.min(time, timeline.duration),
             duration: timeline.duration,

@@ -108,9 +108,10 @@ presenter (never in the PDF). When the host gives a voice
   reads — and the deck recorded with the sentence being said as a caption,
   with `MediaRecorder`: MP4 where the browser records it, WebM otherwise. It
   records in real time, with its progress, **Sound on/off** and **Cancel**
-  above the deck, and keeps going in a background tab. You hear it as it
-  records; **Sound off** silences the speakers only, the video keeps its
-  sound. Then it offers the video and a WebVTT
+  above the deck, and keeps going in a background tab. You see and hear it as
+  it records — the deck on screen follows the slide being recorded, with its
+  caption, as **Play** does, and goes back where you were at the end;
+  **Sound off** silences the speakers only, the video keeps its sound. Then it offers the video and a WebVTT
   captions file with the same sentences and timings, named after the deck.
 
 A narrator without `synthesize` gives no **Video** button. A narrator that

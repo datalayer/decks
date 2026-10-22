@@ -9,7 +9,10 @@
  * deck into a video (`record.ts`), and `DeckVideoPanel`, its progress with
  * *Sound on/off* and *Cancel* while it is made, then the video and its
  * captions to download. The narration is heard as it is recorded; *Sound
- * off* silences the speakers only, never the recording (`sound.ts`).
+ * off* silences the speakers only, never the recording (`sound.ts`). While
+ * it records, the deck on screen follows it as *Play* does — the slide being
+ * recorded, its sentence as a caption (`following`) — and goes back to where
+ * the reader was at the end.
  *
  * @module video/DeckVideoPanel
  */
@@ -20,9 +23,9 @@ import { Box, Button, Flash, ProgressBar, Text } from '@primer/react';
 import { DownloadIcon, MuteIcon, UnmuteIcon, XIcon } from '@primer/octicons-react';
 import type { RevealApi } from 'reveal.js';
 import type { DeckNarrator } from '../host';
-import { noteSentences, scriptOf } from '../narration';
+import { noteSentences, scriptOf, type NarrationState } from '../narration';
 import type { DeckSpec } from '../types';
-import { makeDeckVideo, VideoCancelled, type VideoProgress } from './record';
+import { makeDeckVideo, showWhole, VideoCancelled, type VideoProgress } from './record';
 import { setHeard, speakersGain } from './sound';
 import { formatClock, videoFileStem } from './timeline';
 
@@ -48,6 +51,11 @@ export type DeckVideoControl = {
   heard: boolean;
   /** *Sound on/off*: the speakers only, the recording keeps its sound. */
   setHeard: (heard: boolean) => void;
+  /**
+   * While recording, what the deck on screen shows, in *Play*'s terms: the
+   * slide being recorded and its sentence, for `PlaybackCaptions`.
+   */
+  following?: NarrationState;
   /** Put the result or the failure away, and free the files. */
   dismiss: () => void;
 };
@@ -62,6 +70,7 @@ export const useDeckVideo = (
   const [heard, setHeardState] = useState(true);
   const heardNow = useRef(true);
   const speakers = useRef<GainNode | null>(null);
+  const [script, setScript] = useState<string[][]>([]);
   const urls = useRef<string[]>([]);
 
   const free = useCallback(() => {
@@ -76,6 +85,11 @@ export const useDeckVideo = (
       return;
     }
     free();
+    // Where the reader was: the deck is put back there at the end.
+    const was = deck.getIndices();
+    const lines = scriptOf(spec.slides, narrator?.sentences ?? noteSentences);
+    setScript(lines);
+    let shown = -1;
     const controller = new AbortController();
     running.current = controller;
     // Made here, in the press: a browser starts sound only after a gesture.
@@ -87,16 +101,23 @@ export const useDeckVideo = (
     const title = spec.deck.title;
     void makeDeckVideo({
       deck,
-      script: scriptOf(spec.slides, narrator?.sentences ?? noteSentences),
+      script: lines,
       synthesize,
       audio,
       speakers: speakers.current,
       title,
       signal: controller.signal,
       onProgress: progress => {
-        if (!controller.signal.aborted) {
-          setState({ status: 'making', progress });
+        if (controller.signal.aborted) {
+          return;
         }
+        // The deck on screen follows the recording, slide by slide; the
+        // video itself is drawn from the pictures taken before.
+        if (progress.phase === 'recording' && progress.slide !== shown) {
+          shown = progress.slide;
+          showWhole(deck, progress.slide);
+        }
+        setState({ status: 'making', progress });
       },
     })
       .then(made => {
@@ -128,6 +149,13 @@ export const useDeckVideo = (
       .finally(() => {
         running.current = null;
         speakers.current = null;
+        if (shown >= 0) {
+          try {
+            deck.slide(was.h, was.v, was.f);
+          } catch {
+            // The deck is gone with the page.
+          }
+        }
         void audio.close();
       });
   }, [api, free, narrator, spec]);
@@ -154,7 +182,18 @@ export const useDeckVideo = (
     [free],
   );
 
-  return { state, start, cancel, heard, setHeard: hear, dismiss };
+  const following: NarrationState | undefined =
+    state.status === 'making' && state.progress.phase === 'recording'
+      ? {
+          status: 'playing',
+          script,
+          slide: state.progress.slide,
+          sentence: state.progress.sentence,
+          run: 0,
+        }
+      : undefined;
+
+  return { state, start, cancel, heard, setHeard: hear, following, dismiss };
 };
 
 const progressText = (progress: VideoProgress): { text: string; percent: number } => {

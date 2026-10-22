@@ -128,6 +128,26 @@ export const frameAt = (
   return { slide: current.slide, cue };
 };
 
+/**
+ * Where the deck on screen follows the recording at `time`, as *Play* shows
+ * it: the slide, and the sentence being said — or the last one said on that
+ * slide, between sentences; 0 before the first.
+ */
+export const followAt = (
+  timeline: VideoTimeline,
+  time: number,
+): { slide: number; sentence: number } => {
+  const { slide } = frameAt(timeline, time);
+  const own = timeline.slides.find(one => one.slide === slide)?.cues ?? [];
+  let sentence = 0;
+  for (const cue of own) {
+    if (time >= cue.start) {
+      sentence = cue.sentence;
+    }
+  }
+  return { slide, sentence };
+};
+
 /** `m:ss`, or `h:mm:ss` past an hour: a duration as the reader reads it. */
 export const formatClock = (seconds: number): string => {
   const whole = Math.max(0, Math.floor(seconds));

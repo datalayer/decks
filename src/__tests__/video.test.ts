@@ -17,6 +17,7 @@ import {
   SLIDE_LEAD_S,
   SLIDE_TAIL_S,
   buildTimeline,
+  followAt,
   formatClock,
   frameAt,
   videoFileStem,
@@ -142,5 +143,32 @@ describe('names and clocks', () => {
     expect(formatClock(0)).toBe('0:00');
     expect(formatClock(65.9)).toBe('1:05');
     expect(formatClock(3725)).toBe('1:02:05');
+  });
+});
+
+describe('followAt: the deck on screen follows the recording', () => {
+  // Slide 1: two sentences (2 s, 1.5 s); slide 2 silent; slide 3: one (3 s).
+  const timeline = buildTimeline([['One.', 'Two.'], [], ['Three.']], [[2, 1.5], [], [3]]);
+  const [first, second, third] = timeline.cues;
+
+  it('shows the first slide and its first sentence before it is said', () => {
+    expect(followAt(timeline, 0)).toEqual({ slide: 0, sentence: 0 });
+  });
+
+  it('shows the sentence being said, and keeps the last one said between sentences', () => {
+    expect(followAt(timeline, first.start + 0.1)).toEqual({ slide: 0, sentence: 0 });
+    expect(followAt(timeline, first.end + 0.01)).toEqual({ slide: 0, sentence: 0 });
+    expect(followAt(timeline, second.start)).toEqual({ slide: 0, sentence: 1 });
+    expect(followAt(timeline, second.end + SLIDE_TAIL_S / 2)).toEqual({ slide: 0, sentence: 1 });
+  });
+
+  it('moves to each slide when the timeline enters it, a silent one included', () => {
+    expect(followAt(timeline, timeline.slides[1].start)).toEqual({ slide: 1, sentence: 0 });
+    expect(followAt(timeline, timeline.slides[2].start)).toEqual({ slide: 2, sentence: 0 });
+    expect(followAt(timeline, third.start + 1)).toEqual({ slide: 2, sentence: 0 });
+  });
+
+  it('stays on the last slide past the end', () => {
+    expect(followAt(timeline, timeline.duration + 5)).toEqual({ slide: 2, sentence: 0 });
   });
 });
