@@ -24,12 +24,14 @@ import {
   ScreenFullIcon,
   ScreenNormalIcon,
   SquareFillIcon,
+  VideoIcon,
 } from '@primer/octicons-react';
 import type { RevealApi } from 'reveal.js';
 import { DeckRenderer } from './runtime/DeckRenderer';
 import { useDecksHost, useDecksNarrator, useDecksTheme } from './host';
 import { PlaybackCaptions, SpeakerNotes, useDeckPlayback } from './DeckPlayback';
 import { SILENT_SLIDE_MS } from './narration';
+import { DeckVideoPanel, useDeckVideo } from './video/DeckVideoPanel';
 
 const SILENT_SECONDS = Math.round(SILENT_SLIDE_MS / 1000);
 import { setDeckThemeOverride } from './deckThemeOverride';
@@ -190,9 +192,11 @@ export const DeckView = ({
   const narrator = useDecksNarrator();
   const { signIn } = useDecksHost();
   const playback = useDeckPlayback(spec, narrator, api);
+  const video = useDeckVideo(spec, narrator, api);
   const [explained, setExplained] = useState(false);
   const playing = playback.state.status === 'playing';
   const paused = playback.state.status === 'paused';
+  const making = video.state.status === 'making';
   const onPlay = () => {
     if (narrator?.unavailable) {
       setExplained(true);
@@ -200,6 +204,15 @@ export const DeckView = ({
     }
     setExplained(false);
     playback.play(api.current?.getIndices().h ?? index);
+  };
+  // The same refusal as Play's: the reason, and the way to sign in.
+  const onVideo = () => {
+    if (narrator?.unavailable) {
+      setExplained(true);
+      return;
+    }
+    setExplained(false);
+    video.start();
   };
   const changed = useCallback(
     (next: number) => {
@@ -273,10 +286,19 @@ export const DeckView = ({
                 </Button>
               </>
             ) : (
-              <Button leadingVisual={PlayIcon} onClick={onPlay}>
+              <Button leadingVisual={PlayIcon} onClick={onPlay} disabled={making}>
                 Play
               </Button>
             ))}
+          {narrator?.synthesize && (
+            <Button
+              leadingVisual={VideoIcon}
+              onClick={onVideo}
+              disabled={making || playing || paused}
+            >
+              Video
+            </Button>
+          )}
           <Button
             leadingVisual={full ? ScreenNormalIcon : ScreenFullIcon}
             onClick={toggleFullscreen}
@@ -299,6 +321,7 @@ export const DeckView = ({
           )}
         </Flash>
       )}
+      <DeckVideoPanel control={video} />
       {playback.state.status === 'refused' && (
         <Flash variant="danger">
           Playing stopped: {playback.state.reason}
@@ -335,6 +358,13 @@ export const DeckView = ({
             {' '}
             · Play reads them aloud, slide after slide, as captions (space pauses,
             Escape stops; a slide without notes stays {SILENT_SECONDS} seconds)
+          </>
+        ) : null}
+        {narrator?.synthesize ? (
+          <>
+            {' '}
+            · Video records the same, voice and captions, as a video file with its
+            captions file (in real time)
           </>
         ) : null}
       </Text>

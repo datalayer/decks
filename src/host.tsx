@@ -90,6 +90,15 @@ export type DeckNarrator = {
   speak: (sentences: string[], events: NarrationCallbacks) => void;
   /** Stop at once. No callback of the last `speak` may arrive afterwards. */
   stop: () => void;
+  /**
+   * The whole audio of one sentence, in a format the browser decodes
+   * (`AudioContext.decodeAudioData`: Opus, MP3, WAV…), said by the same voice
+   * as `speak`. Rejects with an `Error` whose message is shown to the reader
+   * as it is. What *Video* records the deck with: absent, the deck has no
+   * *Video* button. A narrator that is `unavailable` still gives it (one that
+   * rejects), so *Video* is there to say why.
+   */
+  synthesize?: (sentence: string) => Promise<ArrayBuffer>;
 };
 
 export type DecksHost = {
@@ -111,7 +120,8 @@ export type DecksHost = {
    * The voice that plays a deck, read once per deck view. A hook, because the
    * narrator depends on who is reading (a token) and may change with them.
    * Keep it the same object between renders (memoise it): a new one restarts
-   * the slide being read. Absent, the deck has no *Play* button.
+   * the slide being read. Absent, the deck has no *Play* button, and no
+   * *Video* button either (see `DeckNarrator.synthesize`).
    */
   useNarrator?: () => DeckNarrator | undefined;
 };

@@ -92,6 +92,29 @@ What the engine needs from the application around it — the theme, a footer
 logo, whether the reader is signed in — arrives through `DecksHostProvider`,
 with defaults that make a bare mount work.
 
+### Notes, Play and Video
+
+Every slide may carry `notes`. Above a deck, **Notes** shows them to the
+presenter (never in the PDF). When the host gives a voice
+(`DecksHost.useNarrator`, a `DeckNarrator`), two more buttons follow
+**Download PDF**:
+
+- **Play** reads the notes aloud, slide after slide, as captions at the bottom
+  of the slide; a slide without notes stays four seconds.
+- **Video** makes the same into a video file, in the browser: each slide drawn
+  at 1920×1080 (fragments shown, fonts, pictures and Mermaid diagrams waited
+  for), each sentence voiced by the narrator's `synthesize(sentence)` — the
+  whole audio of one sentence, in a format `AudioContext.decodeAudioData`
+  reads — and the deck recorded with the sentence being said as a caption,
+  with `MediaRecorder`: MP4 where the browser records it, WebM otherwise. It
+  records in real time, with its progress and **Cancel** above the deck, and
+  keeps going in a background tab. Then it offers the video and a WebVTT
+  captions file with the same sentences and timings, named after the deck.
+
+A narrator without `synthesize` gives no **Video** button. A narrator that
+cannot speak for this reader (`unavailable`, with `needsSignIn` when signing
+in is the way out) has both buttons say why rather than play or record.
+
 ## Agents
 
 Everything an agent may do with decks is declared by this plugin, as one
