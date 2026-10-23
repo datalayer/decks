@@ -102,7 +102,7 @@ export const pngOf = (picture: HTMLCanvasElement): Promise<Blob> =>
   new Promise((resolve, reject) =>
     picture.toBlob(
       blob =>
-        blob ? resolve(blob) : reject(new Error('The first slide could not be made a picture.')),
+        blob ? resolve(blob) : reject(new Error('The slide could not be made a picture.')),
       'image/png',
     ),
   );
@@ -206,17 +206,18 @@ const STILL_CSS =
   `.${CAPTURING}, .${CAPTURING} *, .${CAPTURING} *::before, .${CAPTURING} *::after ` +
   '{ transition: none !important; animation: none !important; }';
 
+/** The size of a picture of a slide. */
+export type SlideImageSize = { width: number; height: number };
+
 /**
- * Every slide of the deck on screen, as a 1920×1080 picture. The deck is
- * moved through them, with every transition off, and put back where it was.
+ * Draw slides of the deck on screen, each by `draw`, with every transition
+ * off; the deck is put back where it was afterwards.
  */
-export const drawSlides = async (
+const withSlidesStill = async <T>(
   deck: RevealApi,
-  count: number,
-  signal: AbortSignal,
-  onProgress: (progress: VideoProgress) => void,
-): Promise<HTMLCanvasElement[]> => {
-  const element = deck.getRevealElement();
+  draw: (slide: (index: number, size: SlideImageSize) => Promise<HTMLCanvasElement>) => Promise<T>,
+): Promise<T> => {
+  const element = deck.getRevealElement() as HTMLElement | undefined;
   if (!element) {
     throw new Error('The deck is not on screen.');
   }
@@ -233,10 +234,7 @@ export const drawSlides = async (
     }
     const backgroundColor = paintBehind(element);
     const fontEmbedCSS = await getFontEmbedCSS(element, { filter: onSlide });
-    const pictures: HTMLCanvasElement[] = [];
-    for (let index = 0; index < count; index++) {
-      check(signal);
-      onProgress({ phase: 'slides', done: index, total: count });
+    return await draw(async (index, size) => {
       const section = showWhole(deck, index);
       await slideReady(section, index + 1);
       // Two frames' worth for the layout to settle, by timer: a hidden tab
@@ -246,25 +244,23 @@ export const drawSlides = async (
         filter: onSlide,
         fontEmbedCSS,
         backgroundColor,
-        pixelRatio: VIDEO_WIDTH / width,
+        pixelRatio: size.width / width,
         width,
         height,
         skipAutoScale: true,
       });
       const picture = document.createElement('canvas');
-      picture.width = VIDEO_WIDTH;
-      picture.height = VIDEO_HEIGHT;
+      picture.width = size.width;
+      picture.height = size.height;
       const context = picture.getContext('2d');
       if (!context) {
         throw new Error('This browser gives no canvas to draw the slides on.');
       }
       context.fillStyle = backgroundColor;
-      context.fillRect(0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
-      context.drawImage(drawn, 0, 0, VIDEO_WIDTH, VIDEO_HEIGHT);
-      pictures.push(picture);
-    }
-    onProgress({ phase: 'slides', done: count, total: count });
-    return pictures;
+      context.fillRect(0, 0, size.width, size.height);
+      context.drawImage(drawn, 0, 0, size.width, size.height);
+      return picture;
+    });
   } finally {
     deck.slide(was.h, was.v, was.f);
     window.setTimeout(() => {
@@ -272,6 +268,47 @@ export const drawSlides = async (
       still.remove();
     }, 100);
   }
+};
+
+/**
+ * Every slide of the deck on screen, as a 1920×1080 picture. The deck is
+ * moved through them, with every transition off, and put back where it was.
+ */
+export const drawSlides = (
+  deck: RevealApi,
+  count: number,
+  signal: AbortSignal,
+  onProgress: (progress: VideoProgress) => void,
+): Promise<HTMLCanvasElement[]> =>
+  withSlidesStill(deck, async slide => {
+    const pictures: HTMLCanvasElement[] = [];
+    for (let index = 0; index < count; index++) {
+      check(signal);
+      onProgress({ phase: 'slides', done: index, total: count });
+      pictures.push(await slide(index, { width: VIDEO_WIDTH, height: VIDEO_HEIGHT }));
+    }
+    onProgress({ phase: 'slides', done: count, total: count });
+    return pictures;
+  });
+
+/**
+ * One slide of the deck on screen as a picture, the way the video draws it:
+ * every fragment shown, nothing in motion, its pictures and diagrams waited
+ * for — 1920×1080 unless a size is asked. `index` is 0-based. The deck is put
+ * back on the slide it was showing. `pngOf` makes the picture a PNG file.
+ */
+export const renderSlideImage = (
+  deck: RevealApi,
+  index: number,
+  size: SlideImageSize = { width: VIDEO_WIDTH, height: VIDEO_HEIGHT },
+): Promise<HTMLCanvasElement> => {
+  const total = deck.getTotalSlides();
+  if (!Number.isInteger(index) || index < 0 || index >= total) {
+    return Promise.reject(
+      new Error(`The deck has no slide ${index + 1}: it has ${total}.`),
+    );
+  }
+  return withSlidesStill(deck, slide => slide(index, size));
 };
 
 // --- 2. The sentences as sound ---------------------------------------------

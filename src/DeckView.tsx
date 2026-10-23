@@ -38,7 +38,7 @@ import {
 } from './video/DeckVideoPanel';
 
 const SILENT_SECONDS = Math.round(SILENT_SLIDE_MS / 1000);
-import { setDeckThemeOverride } from './deckThemeOverride';
+import { getDeckThemeOverride, setDeckThemeOverride } from './deckThemeOverride';
 import type { DeckSpec } from './types';
 
 /**
@@ -149,8 +149,11 @@ type DeckViewProps = {
  * Checked against the registry rather than cast: a spec naming a theme that
  * does not exist should leave the reader's own alone rather than send the
  * provider to its default, which is neither.
+ *
+ * Exported for a host that draws a deck with `DeckRenderer` alone — a slide
+ * made a picture (`renderSlideImage`) in the theme its public page shows.
  */
-const useDeckTheme = (spec: DeckSpec): void => {
+export const useDeckTheme = (spec: DeckSpec): void => {
   const asked = spec.deck.theme;
   const mode = spec.deck.colorMode;
   useEffect(() => {
@@ -163,10 +166,14 @@ const useDeckTheme = (spec: DeckSpec): void => {
     if (!variant && !colorMode) {
       return undefined;
     }
+    // What was asked before, put back on the way out: a deck drawn inside a
+    // page that already shows one (a slide picked as its picture, over its
+    // editor) must not take the page's theme away when it goes.
+    const before = getDeckThemeOverride();
     setDeckThemeOverride({ variant, colorMode });
     // Cleared on the way out — and on a spec change, which is what makes
     // moving from one deck to another land in the right theme.
-    return () => setDeckThemeOverride(null);
+    return () => setDeckThemeOverride(before);
   }, [asked, mode]);
 };
 
