@@ -123,7 +123,8 @@ type DeckViewProps = {
   onSlideChange?: (slide: number) => void;
   /**
    * Where the video *Video* makes is kept, when the host keeps it: *Video*
-   * reads as its label and hands it the video once made.
+   * reads as its label and hands it the video once made. Absent, the
+   * host's `DecksHost.videoPublisher`, if it gave one.
    */
   videoPublisher?: DeckVideoPublisher;
 };
@@ -200,9 +201,10 @@ export const DeckView = ({
 
   const [notesShown, setNotesShown] = useState(false);
   const narrator = useDecksNarrator();
-  const { signIn } = useDecksHost();
+  const { signIn, videoPublisher: hostPublisher } = useDecksHost();
+  const publisher = videoPublisher ?? hostPublisher;
   const playback = useDeckPlayback(spec, narrator, api);
-  const video = useDeckVideo(spec, narrator, api, videoPublisher);
+  const video = useDeckVideo(spec, narrator, api, publisher);
   const [explained, setExplained] = useState(false);
   const playing = playback.state.status === 'playing';
   const paused = playback.state.status === 'paused';
@@ -306,7 +308,7 @@ export const DeckView = ({
               onClick={onVideo}
               disabled={making || playing || paused}
             >
-              {videoPublisher?.label ?? 'Video'}
+              {publisher?.label ?? 'Video'}
             </Button>
           )}
           <Button

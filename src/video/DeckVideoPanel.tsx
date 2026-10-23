@@ -14,10 +14,12 @@
  * recorded, its sentence as a caption (`following`) — and goes back to where
  * the reader was at the end.
  *
- * A host that keeps the video somewhere — the landing, on a published deck's
- * Library page, for its owner — passes a `DeckVideoPublisher`: *Video* then
- * reads as the publisher's label, and the video is handed to it as soon as it
- * is made, the files still offered for download.
+ * A host that keeps the video somewhere — the landing, with the deck in its
+ * space for whoever may change it, and on a published deck's Library page
+ * for its owner — passes a `DeckVideoPublisher` (to `DeckView`, or once for
+ * every deck under it through `DecksHost.videoPublisher`): *Video* then reads
+ * as the publisher's label, and the video is handed to it as soon as it is
+ * made, with the spec it was made from, the files still offered for download.
  *
  * @module video/DeckVideoPanel
  */
@@ -45,10 +47,12 @@ export type DeckVideoPublisher = {
   /** What *Video* reads instead, e.g. "Make the video". */
   label: string;
   /**
-   * Keep the video, its captions and its poster. Rejects with an `Error`
-   * whose message is shown to the reader as it is.
+   * Keep the video, its captions and its poster. `spec` is the deck as it
+   * was when the video was made — what a host compares with the deck it
+   * holds to say whether the video is still the deck's. Rejects with an
+   * `Error` whose message is shown to the reader as it is.
    */
-  publish: (made: DeckVideo) => Promise<void>;
+  publish: (made: DeckVideo, spec: DeckSpec) => Promise<void>;
   /** Said once it is kept, e.g. "It now plays on the deck's Library page." */
   published: string;
 };
@@ -130,6 +134,8 @@ export const useDeckVideo = (
   const [script, setScript] = useState<string[][]>([]);
   const urls = useRef<string[]>([]);
   const made = useRef<DeckVideo | null>(null);
+  // The deck as it was when the video was made: it may change meanwhile.
+  const madeFrom = useRef<DeckSpec>(spec);
   const publishing = useRef(publisher);
   publishing.current = publisher;
 
@@ -151,7 +157,7 @@ export const useDeckVideo = (
       );
     settle({ status: 'keeping' });
     keeper
-      .publish(video)
+      .publish(video, madeFrom.current)
       .then(() => settle({ status: 'kept' }))
       .catch((error: unknown) =>
         settle({
@@ -168,6 +174,7 @@ export const useDeckVideo = (
       return;
     }
     free();
+    madeFrom.current = spec;
     // Where the reader was: the deck is put back there at the end.
     const was = deck.getIndices();
     const lines = scriptOf(spec.slides, narrator?.sentences ?? noteSentences);

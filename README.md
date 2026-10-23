@@ -115,11 +115,23 @@ presenter (never in the PDF). When the host gives a voice
   captions file with the same sentences and timings, named after the deck.
 
 A host that keeps the video passes `DeckView` a `videoPublisher`
-(`DeckVideoPublisher`: a `label`, `publish(made)`, and what to say once
-`published`). **Video** then reads as the label, and the video — with its
-captions and `poster`, the first slide as a 1920×1080 PNG — is handed to
-`publish` as soon as it is made; a refusal shows its reason with **Upload
-again**. The landing does this for a deck's owner on its Library page.
+(`DeckVideoPublisher`: a `label`, `publish(made, spec)`, and what to say once
+`published`) — or gives it once, for every deck under it, as
+`DecksHost.videoPublisher` (how a host keeps the video of a deck the plugin
+draws; `DeckView`'s own prop wins). **Video** then reads as the label, and the
+video — with its captions and `poster`, the first slide as a 1920×1080 PNG —
+is handed to `publish` as soon as it is made, with `spec`, the deck as it was
+when **Video** was pressed, so the host can tell later whether the video is
+still the deck's; a refusal shows its reason with **Upload again**.
+
+The landing does this twice. On a deck's page in its space, the video is
+saved with the deck (Spacer, `PUT /api/spacer/v1/decks/{id}/video`, in the
+private bucket): the next time the page opens it plays above the slides with
+**Download**, without being made again, and **Video** reads **Make again** —
+the page says so when the deck was edited after it was made. Publishing that
+deck to the Library offers **Publish as a video**, which copies the saved
+video into the Library's public one. On a published deck's Library page, its
+owner's **Make the video** uploads straight to the Library.
 
 A narrator without `synthesize` gives no **Video** button. A narrator that
 cannot speak for this reader (`unavailable`, with `needsSignIn` when signing

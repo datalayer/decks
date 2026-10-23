@@ -27,6 +27,7 @@
 import type { ComponentType, JSX, ReactNode } from 'react';
 import { createContext, useContext } from 'react';
 import { useThemeStore, type ColorMode, type ThemeVariant } from '@datalayer/primer-addons';
+import type { DeckVideoPublisher } from './video/DeckVideoPanel';
 
 /** The theme a deck is drawn in: the application's, unless a deck asks. */
 export type DecksTheme = {
@@ -124,6 +125,13 @@ export type DecksHost = {
    * *Video* button either (see `DeckNarrator.synthesize`).
    */
   useNarrator?: () => DeckNarrator | undefined;
+  /**
+   * Where the video *Video* makes is kept, for every deck under this host
+   * that was not given one of its own (`DeckView`'s `videoPublisher` wins):
+   * how a host keeps the video of a deck it draws through the plugin, which
+   * renders `DeckView` itself. Absent, the video is only offered for download.
+   */
+  videoPublisher?: DeckVideoPublisher;
 };
 
 const useDefaultTheme = (): DecksTheme => {
