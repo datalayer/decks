@@ -110,8 +110,20 @@ const useFullscreen = (
   return [full, toggle];
 };
 
+/** A control of the deck's toolbar. */
+export type DeckControl = 'notes' | 'pdf' | 'play' | 'video' | 'present';
+
+/** Every control, in the toolbar's order: what a deck shows when it is not told otherwise. */
+export const DECK_CONTROLS: readonly DeckControl[] = ['notes', 'pdf', 'play', 'video', 'present'];
+
 type DeckViewProps = {
   spec: DeckSpec;
+  /**
+   * The toolbar's controls to show; every one when absent. A control shown
+   * still needs what it works with (a print path for `pdf`, a narrator for
+   * `play`, a narrator that synthesizes for `video`).
+   */
+  controls?: readonly DeckControl[];
   /**
    * Where the deck prints itself, when it has such a place. Opened in a tab of
    * its own by the Download PDF button; see `DeckPrintPage` for why a tab.
@@ -179,6 +191,7 @@ export const useDeckTheme = (spec: DeckSpec): void => {
 
 export const DeckView = ({
   spec,
+  controls = DECK_CONTROLS,
   printPath,
   slide,
   onSlideChange,
@@ -188,6 +201,7 @@ export const DeckView = ({
   const chrome = useChromeHeight(frame);
   const [full, toggleFullscreen] = useFullscreen(frame);
   useDeckTheme(spec);
+  const shows = (control: DeckControl): boolean => controls.includes(control);
 
   // The running deck and its element, once Reveal is ready: playing moves
   // it, and the captions and presenting notes are drawn inside it.
@@ -276,14 +290,16 @@ export const DeckView = ({
           )}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Button
-            leadingVisual={NoteIcon}
-            aria-pressed={notesShown}
-            onClick={() => setNotesShown(shown => !shown)}
-          >
-            {notesShown ? 'Hide notes' : 'Notes'}
-          </Button>
-          {printPath && (
+          {shows('notes') && (
+            <Button
+              leadingVisual={NoteIcon}
+              aria-pressed={notesShown}
+              onClick={() => setNotesShown(shown => !shown)}
+            >
+              {notesShown ? 'Hide notes' : 'Notes'}
+            </Button>
+          )}
+          {shows('pdf') && printPath && (
             <Button
               leadingVisual={DownloadIcon}
               onClick={() => window.open(printPath, '_blank', 'noopener')}
@@ -291,7 +307,8 @@ export const DeckView = ({
               Download PDF
             </Button>
           )}
-          {narrator &&
+          {shows('play') &&
+            narrator &&
             (playing || paused ? (
               <>
                 <Button
@@ -309,7 +326,7 @@ export const DeckView = ({
                 Play
               </Button>
             ))}
-          {narrator?.synthesize && (
+          {shows('video') && narrator?.synthesize && (
             <Button
               leadingVisual={VideoIcon}
               onClick={onVideo}
@@ -318,12 +335,14 @@ export const DeckView = ({
               {publisher?.label ?? 'Video'}
             </Button>
           )}
-          <Button
-            leadingVisual={full ? ScreenNormalIcon : ScreenFullIcon}
-            onClick={toggleFullscreen}
-          >
-            {full ? 'Exit' : 'Present'}
-          </Button>
+          {(shows('present') || full) && (
+            <Button
+              leadingVisual={full ? ScreenNormalIcon : ScreenFullIcon}
+              onClick={toggleFullscreen}
+            >
+              {full ? 'Exit' : 'Present'}
+            </Button>
+          )}
         </Box>
       </Box>
 
