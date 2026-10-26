@@ -90,7 +90,7 @@ describe('keeping the video', () => {
     };
     const root = createRoot(host);
     act(() =>
-      root.render(createElement(DecksHostProvider, { host: { videoPublisher: publisher } }, createElement(Probe))),
+      root.render(createElement(DecksHostProvider, { host: { videoPublisher: publisher }, children: createElement(Probe) })),
     );
     expect(seen).toBe(publisher);
     act(() => root.unmount());
