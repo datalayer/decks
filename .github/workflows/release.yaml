@@ -216,8 +216,15 @@ jobs:
             fi
             # "./": npm reads a bare "dist/x.tgz" as the GitHub shorthand
             # github:dist/x.tgz and refuses to fetch it (EALLOWGIT).
-            npm publish "./$tarball" --provenance --access public
+            # A refusal does not stop the others (a new package has no trusted
+            # publisher until it was published once by hand): each is tried,
+            # and the job fails at the end naming the ones that were refused.
+            npm publish "./$tarball" --provenance --access public || refused="$refused $name@$version"
           done
+          if [ -n "${refused:-}" ]; then
+            echo "Not published:$refused" >&2
+            exit 1
+          fi
 
   release:
     name: GitHub release
