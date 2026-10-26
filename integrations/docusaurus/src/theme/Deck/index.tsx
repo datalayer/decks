@@ -55,14 +55,14 @@ const titleOf = (spec: unknown): string | undefined => {
 };
 
 export default function Deck({ spec, controls }: DeckProps): JSX.Element {
-  const site = usePluginData('docusaurus-plugin-decks') as { controls?: string[] } | undefined;
+  const site = usePluginData('docusaurus-plugin-decks') as { controls?: string[]; theme?: string } | undefined;
   const shown = controls ?? (site?.controls ?? []).join(',');
   const placeholder = <Placeholder title={titleOf(spec)} />;
   return (
     <BrowserOnly fallback={placeholder}>
       {() => (
         <Suspense fallback={placeholder}>
-          <DeckClient spec={spec} controls={shown} />
+          <DeckClient spec={spec} controls={shown} theme={site?.theme ?? 'loop'} />
         </Suspense>
       )}
     </BrowserOnly>

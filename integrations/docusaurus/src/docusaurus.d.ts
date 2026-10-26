@@ -22,6 +22,8 @@ declare module '@docusaurus/useGlobalData' {
   export function usePluginData(name: string, id?: string): unknown;
 }
 
+declare module '@datalayer/primer-addons/style/loop-face.css';
+
 declare module '@datalayer/decks-docusaurus/client' {
   import type { ComponentType } from 'react';
   import type { DeckClientProps } from './client/DeckClient.js';

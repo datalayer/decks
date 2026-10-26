@@ -51,6 +51,12 @@ export type DecksPluginOptions = {
    * print route and `video` a voice, which a documentation site lacks.
    */
   controls?: string[];
+  /**
+   * The primer-addons theme variant the decks wear: `loop` (what datalayer.ai
+   * wears) when absent, or `datalayer`, `spatial` and the others. Its face is
+   * loaded with it when it is `loop`'s Inter.
+   */
+  theme?: string;
 };
 
 /**
@@ -78,7 +84,10 @@ const sharedAliases = (siteDir: string): Record<string, string> => {
 /** What the client reads (`usePluginData`). */
 export type DecksGlobalData = {
   controls: string[];
+  theme: string;
 };
+
+export const DEFAULT_THEME = 'loop';
 
 export const DEFAULT_CONTROLS: readonly string[] = ['notes', 'play', 'present'];
 
@@ -113,6 +122,7 @@ export default function decksPlugin(
   const here = path.dirname(fileURLToPath(import.meta.url));
   const decksDir = path.resolve(context.siteDir, options.decksDir ?? 'decks');
   const controls = options.controls ?? [...DEFAULT_CONTROLS];
+  const theme = options.theme ?? DEFAULT_THEME;
   if (options.maxSlides !== undefined && !(options.maxSlides >= 1)) {
     throw new Error(`${PLUGIN_NAME}: maxSlides must be at least 1`);
   }
@@ -146,7 +156,7 @@ export default function decksPlugin(
     },
 
     async contentLoaded({ actions }: ContentLoadedArgs) {
-      actions.setGlobalData({ controls });
+      actions.setGlobalData({ controls, theme });
     },
 
     configureWebpack(_config: unknown, isServer: boolean) {

@@ -13,9 +13,11 @@
 - **Drawn in the browser only.** The deck engine (React, Reveal.js and
   Datalayer's design system) is kept out of the server bundle; the page holds
   the deck's place with a box of the slides' shape until it arrives.
-- **In the site's colours.** The deck wears Datalayer's theme in the colour
-  mode the site's own switch chose, and follows it when the reader switches.
-  There is no appearance chooser on the deck.
+- **In Datalayer's look, in the site's colour mode.** The deck and its
+  toolbar wear a primer-addons theme — `loop`, what datalayer.ai wears, with
+  its Inter face, unless the site names another — in the colour mode the
+  site's own switch chose, following it when the reader switches. There is no
+  appearance chooser on the deck.
 - **Play, without a voice.** **Play** walks through the deck on its own:
   each slide's speaker notes shown as captions, sentence by sentence, at
   reading pace, the deck moving on when a slide's notes are read. Nothing is
@@ -46,6 +48,7 @@ export default {
 | `decksDir`  | `decks`                 | Where the site's `.deck.json` files are, from the site's directory, searched recursively.                            |
 | `maxSlides` | no limit                | The most slides a deck may have: a longer one fails the build.                                                       |
 | `controls`  | `['notes', 'play', 'present']` | The toolbar's buttons on every deck. `pdf` and `video` need a print route and a voice a docs site lacks. |
+| `theme`     | `loop`                  | The primer-addons theme variant the decks wear: `loop`, `datalayer`, `spatial` and the rest.                         |
 
 ## Write a deck
 

@@ -128,7 +128,10 @@ describe('the plugin', () => {
       content: {},
       actions: { setGlobalData },
     });
-    expect(data).toEqual([{ controls: [...DEFAULT_CONTROLS] }, { controls: ['present'] }]);
+    expect(data).toEqual([
+      { controls: [...DEFAULT_CONTROLS], theme: 'loop' },
+      { controls: ['present'], theme: 'loop' },
+    ]);
     expect(DEFAULT_CONTROLS).toEqual(['notes', 'play', 'present']);
   });
 });
