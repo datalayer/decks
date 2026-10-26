@@ -1,0 +1,28 @@
+// The plugin runs in Node (`index`, `check`) and its theme and client run in
+// the site's webpack. Both are ES modules, and relative imports name their
+// `.js` file so Node can load the plugin as it is emitted. Resolution is the
+// bundler's: `@datalayer/decks`' declarations import their siblings without
+// an extension, as `tsc` emitted them.
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "declaration": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": "src",
+    "outDir": "lib",
+    "baseUrl": ".",
+    "paths": {
+      // The engine as this repository builds it (`npm run build:lib` at the
+      // root), never a published copy.
+      "@datalayer/decks": ["../../lib/index.d.ts"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
+}

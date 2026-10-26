@@ -1,0 +1,61 @@
+{
+  "name": "@datalayer/decks-docusaurus",
+  "version": "1.0.4",
+  "description": "Datalayer Decks in a Docusaurus site: a plugin that checks the site's decks at build time, and a <Deck> component that draws one in an MDX page.",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/datalayer/decks.git",
+    "directory": "integrations/docusaurus"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "default": "./lib/index.js"
+    },
+    "./check": {
+      "types": "./lib/check.d.ts",
+      "import": "./lib/check.js",
+      "default": "./lib/check.js"
+    }
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "datalayer",
+    "decks",
+    "docusaurus",
+    "docusaurus-plugin",
+    "slides",
+    "reveal.js"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf lib",
+    "test": "vitest run --root ."
+  },
+  "peerDependencies": {
+    "@datalayer/decks": "^1.0.5",
+    "@datalayer/primer-addons": "^1.0.23",
+    "@docusaurus/core": "^3.5.0",
+    "@primer/react": "^37.31.0",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

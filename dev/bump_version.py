@@ -5,12 +5,12 @@
 
 """Bump the version, in every file that carries a copy of it.
 
-The version lives in four places. `datalayer_decks/__version__.py` is the
+The version lives in five places. `datalayer_decks/__version__.py` is the
 source: hatch reads it (`[tool.hatch.version] path` in pyproject.toml), and
-so do the plugin manifests the Python package declares. The three
+so do the plugin manifests the Python package declares. The four
 `package.json` files -- the published `@datalayer/decks`, the published
-`@datalayer/decks-plugin-ai-agents`, and the private `@datalayer/decks-app`
--- are copies, and a copy that gets missed ships a package whose manifest
+`@datalayer/decks-plugin-ai-agents` and `@datalayer/decks-docusaurus`, and
+the private `@datalayer/decks-app` -- are copies, and a copy that gets missed ships a package whose manifest
 disagrees with the wheel it travels with.
 
     python dev/bump_version.py patch     # 1.0.3 -> 1.0.4
@@ -42,6 +42,7 @@ SOURCE = ROOT / "datalayer_decks" / "__version__.py"
 COPIES = (
     ROOT / "package.json",
     ROOT / "plugins" / "ai-agents" / "package.json",
+    ROOT / "integrations" / "docusaurus" / "package.json",
     ROOT / "app" / "package.json",
 )
 

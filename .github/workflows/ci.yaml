@@ -77,6 +77,13 @@ jobs:
           npm install --no-audit --no-fund
           npm run build
 
+      - name: Build and test the Docusaurus integration
+        working-directory: decks/integrations/docusaurus
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+          npm test
+
       - name: Build the interface and the container (share/)
         working-directory: decks
         run: |

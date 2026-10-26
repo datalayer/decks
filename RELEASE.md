@@ -14,14 +14,15 @@ One tag releases every package, with no stored token: PyPI and npm trust
 | `datalayer-decks`                   | PyPI     | `pypi`             |
 | `@datalayer/decks`                  | npm      | `npm`              |
 | `@datalayer/decks-plugin-ai-agents` | npm      | `npm`              |
+| `@datalayer/decks-docusaurus`       | npm      | `npm`              |
 
 `@datalayer/decks-app` is private: the interface it builds travels inside the
 wheel (`share/datalayer/reactor/apps/decks`), it is not published on its own.
 
 Every package carries **one version**. It lives in
 `datalayer_decks/__version__.py` — hatch reads it, and so do the plugin
-manifests — and the three `package.json` files carry copies.
-`dev/bump_version.py` moves all four together, or refuses:
+manifests — and the four `package.json` files carry copies.
+`dev/bump_version.py` moves all five together, or refuses:
 
 ```bash
 make bump-patch    # 1.0.3 -> 1.0.4
