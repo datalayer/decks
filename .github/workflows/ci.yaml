@@ -80,7 +80,9 @@ jobs:
       - name: Build and test the Docusaurus integration
         working-directory: decks/integrations/docusaurus
         run: |
-          npm install --no-audit --no-fund
+          # Without its peers: @datalayer/decks is this repository's own,
+          # built above, and may be the version this commit is about to release.
+          npm install --no-audit --no-fund --legacy-peer-deps
           npm run build
           npm test
 

@@ -113,7 +113,8 @@ jobs:
           npm run build:lib
           npm test
           (cd plugins/ai-agents && npm install --no-audit --no-fund && npm run build)
-          (cd integrations/docusaurus && npm install --no-audit --no-fund && npm run build && npm test)
+          # Without its peers: @datalayer/decks is the one built above, not yet published.
+          (cd integrations/docusaurus && npm install --no-audit --no-fund --legacy-peer-deps && npm run build && npm test)
 
       - name: Build the interface and the container (what the wheel carries)
         if: steps.plan.outputs.python != ''

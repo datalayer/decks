@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/decks-docusaurus",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Datalayer Decks in a Docusaurus site: a plugin that checks the site's decks at build time, and a <Deck> component that draws one in an MDX page.",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
@@ -53,8 +53,11 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
+    "@datalayer/primer-addons": "^1.0.44",
+    "@primer/react": "^37.31.0",
     "@types/node": "^24",
     "@types/react": "19.2.18",
+    "react": "19.2.8",
     "typescript": "5.9.3",
     "vitest": "^3.2.4"
   }
