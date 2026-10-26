@@ -120,7 +120,7 @@ describe('the plugin', () => {
     expect(alias['react$']).toBe(path.join(siteDir, 'node_modules/react/index.js'));
   });
 
-  it('gives the client the site’s controls, notes and present by default', async () => {
+  it('gives the client the site’s controls, notes, play and present by default', async () => {
     const data: unknown[] = [];
     const setGlobalData = (value: unknown) => data.push(value);
     await decksPlugin({ siteDir: '/' }).contentLoaded({ content: {}, actions: { setGlobalData } });
@@ -129,6 +129,6 @@ describe('the plugin', () => {
       actions: { setGlobalData },
     });
     expect(data).toEqual([{ controls: [...DEFAULT_CONTROLS] }, { controls: ['present'] }]);
-    expect(DEFAULT_CONTROLS).toEqual(['notes', 'present']);
+    expect(DEFAULT_CONTROLS).toEqual(['notes', 'play', 'present']);
   });
 });

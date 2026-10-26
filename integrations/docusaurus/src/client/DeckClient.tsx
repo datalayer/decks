@@ -31,6 +31,7 @@ import {
   type DeckControl,
   type DecksHost,
 } from '@datalayer/decks';
+import { createSilentNarrator } from './silentNarrator.js';
 
 export type DeckClientProps = {
   spec: unknown;
@@ -64,9 +65,11 @@ export default function DeckClient({ spec, controls }: DeckClientProps): JSX.Ele
     store.setColorMode(colorMode);
   }, [colorMode]);
 
+  // Play shows the notes as captions, at reading pace, with no voice.
+  const narrator = useMemo(() => createSilentNarrator(), []);
   const host = useMemo<Partial<DecksHost>>(
-    () => ({ useTheme: () => ({ theme: 'datalayer', colorMode }) }),
-    [colorMode],
+    () => ({ useTheme: () => ({ theme: 'datalayer', colorMode }), useNarrator: () => narrator }),
+    [colorMode, narrator],
   );
 
   if (!checked.valid || !checked.spec) {

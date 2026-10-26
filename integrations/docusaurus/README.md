@@ -16,6 +16,11 @@
 - **In the site's colours.** The deck wears Datalayer's theme in the colour
   mode the site's own switch chose, and follows it when the reader switches.
   There is no appearance chooser on the deck.
+- **Play, without a voice.** **Play** walks through the deck on its own:
+  each slide's speaker notes shown as captions, sentence by sentence, at
+  reading pace, the deck moving on when a slide's notes are read. Nothing is
+  said aloud — a voice, and making a video of the deck, are features of the
+  Datalayer platform.
 - **One React.** React is pinned to the site's own copy, so a deck engine
   resolved from elsewhere in a workspace never brings a second one.
 
@@ -40,7 +45,7 @@ export default {
 | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `decksDir`  | `decks`                 | Where the site's `.deck.json` files are, from the site's directory, searched recursively.                            |
 | `maxSlides` | no limit                | The most slides a deck may have: a longer one fails the build.                                                       |
-| `controls`  | `['notes', 'present']`  | The toolbar's buttons on every deck. `pdf`, `play` and `video` need a print route or a voice a docs site lacks.      |
+| `controls`  | `['notes', 'play', 'present']` | The toolbar's buttons on every deck. `pdf` and `video` need a print route and a voice a docs site lacks. |
 
 ## Write a deck
 
@@ -78,7 +83,8 @@ import sessionKeys from '@site/decks/session-keys.deck.json';
 <Deck spec={sessionKeys} />
 ```
 
-`<Deck controls="present">` shows other buttons than the site's default. A
+`<Deck controls="present">` shows other buttons than the site's default.
+Space pauses and resumes *Play*, Escape stops it. A
 deck that fails the engine's own check (`validateDeckSpec`) is not drawn: the
 page says what is wrong with it instead.
 

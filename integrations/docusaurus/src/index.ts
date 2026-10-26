@@ -44,10 +44,11 @@ export type DecksPluginOptions = {
   /** The most slides a deck may have; no limit when absent. */
   maxSlides?: number;
   /**
-   * The toolbar's controls of every deck (`notes`, `pdf`, `play`, `video`,
-   * `present`), unless a `<Deck controls="…">` says otherwise. `notes` and
-   * `present` when absent: the others need a print route or a voice, which a
-   * documentation site does not have.
+   * The toolbar's controls of every deck (`notes`, `play`, `present`, and
+   * the engine's `pdf` and `video`), unless a `<Deck controls="…">` says
+   * otherwise. `notes`, `play` and `present` when absent. *Play* shows each
+   * slide's notes as captions at reading pace, with no voice; `pdf` needs a
+   * print route and `video` a voice, which a documentation site lacks.
    */
   controls?: string[];
 };
@@ -79,7 +80,7 @@ export type DecksGlobalData = {
   controls: string[];
 };
 
-export const DEFAULT_CONTROLS: readonly string[] = ['notes', 'present'];
+export const DEFAULT_CONTROLS: readonly string[] = ['notes', 'play', 'present'];
 
 type LoadContext = { siteDir: string };
 
