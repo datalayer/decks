@@ -206,6 +206,7 @@ jobs:
       - name: Publish
         run: |
           set -euo pipefail
+          refused=""
           # @datalayer/decks first: the plugin is used beside it.
           for tarball in $(ls dist/datalayer-decks-[0-9]*.tgz 2>/dev/null) $(ls dist/*.tgz | grep -v '/datalayer-decks-[0-9]'); do
             name="$(tar -xOzf "$tarball" package/package.json | node -p "JSON.parse(require('fs').readFileSync(0)).name")"
@@ -221,7 +222,7 @@ jobs:
             # and the job fails at the end naming the ones that were refused.
             npm publish "./$tarball" --provenance --access public || refused="$refused $name@$version"
           done
-          if [ -n "${refused:-}" ]; then
+          if [ -n "$refused" ]; then
             echo "Not published:$refused" >&2
             exit 1
           fi
