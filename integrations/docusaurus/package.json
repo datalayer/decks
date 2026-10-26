@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/decks-docusaurus",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Datalayer Decks in a Docusaurus site: a plugin that checks the site's decks at build time, and a <Deck> component that draws one in an MDX page.",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
