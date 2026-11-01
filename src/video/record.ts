@@ -138,7 +138,81 @@ const NOT_SLIDE = [
 ];
 
 const onSlide = (node: HTMLElement): boolean =>
-  !(node.classList && NOT_SLIDE.some(name => node.classList.contains(name)));
+  !(node.classList && NOT_SLIDE.some(name => node.classList.contains(name))) &&
+  !node.hasAttribute?.('data-video-hidden');
+
+/**
+ * Give the deck element the custom properties it inherits, and return how to
+ * take them back. A picture is drawn from a copy of this element alone, so an
+ * SVG attribute naming a variable set above it would resolve to nothing, and
+ * SVG paints nothing as black.
+ */
+const carryVariables = (element: HTMLElement): (() => void) => {
+  const was = element.style.cssText;
+  const set = (name: string, value: string) => {
+    if (name.startsWith('--')) {
+      element.style.setProperty(name, value.trim());
+    }
+  };
+  if (element.computedStyleMap) {
+    for (const [name, values] of element.computedStyleMap()) {
+      set(name, String(values[0]));
+    }
+  } else {
+    const style = getComputedStyle(element);
+    Array.from(style).forEach(name => set(name, style.getPropertyValue(name)));
+  }
+  return () => {
+    element.style.cssText = was;
+  };
+};
+
+/** A dot travelling a line of a picture, in the picture's pixels. */
+type Motion = { x1: number; y1: number; x2: number; y2: number; radius: number; color: string };
+
+/** Seconds for a dot to travel its line. */
+const MOTION_S = 1.8;
+
+/** What moves on each picture: a picture is a still, and the video adds this over it. */
+const MOTIONS = new WeakMap<HTMLCanvasElement, Motion[]>();
+
+/** The SVG lines of a slide that say something travels them (`data-video-motion`). */
+const motionsOf = (section: HTMLElement, element: HTMLElement, scale: number): Motion[] => {
+  const box = element.getBoundingClientRect();
+  const lines = section.querySelectorAll<SVGLineElement>('line[data-video-motion]');
+  return Array.from(lines).flatMap(line => {
+    const matrix = line.getScreenCTM();
+    if (!matrix) {
+      return [];
+    }
+    const at = (x: number, y: number) => {
+      const point = new DOMPoint(x, y).matrixTransform(matrix);
+      return { x: (point.x - box.left) * scale, y: (point.y - box.top) * scale };
+    };
+    const from = at(line.x1.baseVal.value, line.y1.baseVal.value);
+    const to = at(line.x2.baseVal.value, line.y2.baseVal.value);
+    const color = getComputedStyle(line).color;
+    return [{ x1: from.x, y1: from.y, x2: to.x, y2: to.y, radius: 4.5 * matrix.a * scale, color }];
+  });
+};
+
+/** Each dot, out and back, none in step with the next. */
+const drawMotions = (context: CanvasRenderingContext2D, motions: Motion[], time: number): void => {
+  motions.forEach((motion, index) => {
+    const phase = (time / MOTION_S + index * 0.37) % 2;
+    const done = phase < 1 ? phase : 2 - phase;
+    context.fillStyle = motion.color;
+    context.beginPath();
+    context.arc(
+      motion.x1 + (motion.x2 - motion.x1) * done,
+      motion.y1 + (motion.y2 - motion.y1) * done,
+      motion.radius,
+      0,
+      2 * Math.PI,
+    );
+    context.fill();
+  });
+};
 
 /** The slide's pictures loaded, its fonts in, its Mermaid diagrams drawn. */
 const slideReady = async (section: HTMLElement, number: number): Promise<void> => {
@@ -226,6 +300,7 @@ const withSlidesStill = async <T>(
   still.textContent = STILL_CSS;
   document.head.appendChild(still);
   element.classList.add(CAPTURING);
+  const giveBack = carryVariables(element);
   try {
     const width = element.clientWidth;
     const height = element.clientHeight;
@@ -264,9 +339,11 @@ const withSlidesStill = async <T>(
       context.fillStyle = backgroundColor;
       context.fillRect(0, 0, size.width, size.height);
       context.drawImage(drawn, 0, 0, size.width, size.height);
+      MOTIONS.set(picture, motionsOf(section, element, size.width / width));
       return picture;
     });
   } finally {
+    giveBack();
     deck.slide(was.h, was.v, was.f);
     window.setTimeout(() => {
       element.classList.remove(CAPTURING);
@@ -382,8 +459,10 @@ const drawFrame = (
   picture: HTMLCanvasElement,
   text: string | undefined,
   font: string,
+  time = 0,
 ): void => {
   context.drawImage(picture, 0, 0);
+  drawMotions(context, MOTIONS.get(picture) ?? [], time);
   if (!text) {
     return;
   }
@@ -485,7 +564,7 @@ const recordTimeline = async ({
   // seeks badly.
   const draw = (time: number) => {
     const frame = frameAt(timeline, time);
-    drawFrame(context, pictures[frame.slide], frame.cue?.text, font);
+    drawFrame(context, pictures[frame.slide], frame.cue?.text, font, time);
     track.requestFrame();
     return frame;
   };
@@ -572,6 +651,29 @@ export type MakeDeckVideo = {
   onProgress: (progress: VideoProgress) => void;
 };
 
+/**
+ * A recording as a file a player can trust: MediaRecorder writes as it goes,
+ * in fragments with no duration or index up front, and a player that believes
+ * the first fragment ends at it and cannot seek. Remuxed, nothing re-encoded.
+ */
+const playable = async (recorded: Blob, extension: DeckVideo['extension']): Promise<Blob> => {
+  const { ALL_FORMATS, BlobSource, BufferTarget, Conversion, Input, Mp4OutputFormat, Output, WebMOutputFormat } =
+    await import('mediabunny');
+  const output = new Output({
+    format: extension === 'mp4' ? new Mp4OutputFormat({ fastStart: 'in-memory' }) : new WebMOutputFormat(),
+    target: new BufferTarget(),
+  });
+  const conversion = await Conversion.init({
+    input: new Input({ source: new BlobSource(recorded), formats: ALL_FORMATS }),
+    output,
+  });
+  await conversion.execute();
+  if (!output.target.buffer) {
+    throw new Error('The recording could not be made a file.');
+  }
+  return new Blob([output.target.buffer], { type: recorded.type });
+};
+
 /** The deck, voiced and captioned, as a video and its captions file. */
 export const makeDeckVideo = async ({
   deck,
@@ -599,7 +701,8 @@ export const makeDeckVideo = async ({
     script,
     voiced.map(sounds => sounds.map(sound => sound.duration)),
   );
-  const video = await recordTimeline({
+  const extension = mimeType.startsWith('video/mp4') ? 'mp4' : 'webm';
+  const recorded = await recordTimeline({
     pictures,
     timeline,
     voiced,
@@ -611,8 +714,8 @@ export const makeDeckVideo = async ({
     onProgress,
   });
   return {
-    video,
-    extension: mimeType.startsWith('video/mp4') ? 'mp4' : 'webm',
+    video: await playable(recorded, extension),
+    extension,
     vtt: toVtt(timeline.cues, title),
     poster,
     timeline,
