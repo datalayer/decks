@@ -42,6 +42,17 @@ import { getDeckThemeOverride, setDeckThemeOverride } from './deckThemeOverride'
 import type { DeckSpec } from './types';
 
 /**
+ * The room to leave around a deck whose top is `top` down the page: that top,
+ * plus the same amount of air underneath it. A deck further down than half
+ * the window is scrolled to, not read from the top of the page, so it leaves
+ * the room of a header: what it counted above it would leave it no width.
+ */
+export const deckChromeOf = (top: number, windowHeight: number): number => {
+  const room = Math.max(120, Math.round(top + 48));
+  return room > windowHeight / 2 ? 120 : room;
+};
+
+/**
  * How much of the window the application is using around the deck.
  *
  * Measured rather than assumed, because this page renders under two different
@@ -61,9 +72,7 @@ const useChromeHeight = (element: React.RefObject<HTMLElement | null>): number =
       if (!node) {
         return;
       }
-      // The top of the deck, plus the same amount of air underneath it.
-      const top = node.getBoundingClientRect().top + window.scrollY;
-      setChrome(Math.max(120, Math.round(top + 48)));
+      setChrome(deckChromeOf(node.getBoundingClientRect().top + window.scrollY, window.innerHeight));
     };
     measure();
     window.addEventListener('resize', measure);

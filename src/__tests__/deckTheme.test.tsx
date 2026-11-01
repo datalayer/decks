@@ -13,7 +13,7 @@
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
-import { useDeckTheme } from '../DeckView';
+import { deckChromeOf, useDeckTheme } from '../DeckView';
 import { getDeckThemeOverride, setDeckThemeOverride } from '../deckThemeOverride';
 import type { DeckSpec } from '../types';
 
@@ -54,5 +54,16 @@ describe('useDeckTheme', () => {
     expect(getDeckThemeOverride().colorMode).toBe('light');
     act(() => inner.unmount());
     expect(getDeckThemeOverride().colorMode).toBe('dark');
+  });
+});
+
+describe('the room a deck leaves around it', () => {
+  it('counts what is above a deck near the top of the page', () => {
+    expect(deckChromeOf(200, 1000)).toBe(248);
+    expect(deckChromeOf(0, 1000)).toBe(120);
+  });
+
+  it('leaves a deck far down the page its width', () => {
+    expect(deckChromeOf(3000, 1000)).toBe(120);
   });
 });
