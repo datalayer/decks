@@ -248,6 +248,11 @@ const withSlidesStill = async <T>(
         width,
         height,
         skipAutoScale: true,
+      }).catch((error: unknown) => {
+        // An image that will not load rejects with its load event, no Error.
+        throw error instanceof Error
+          ? error
+          : new Error(`Slide ${index + 1} has a picture this page may not read.`);
       });
       const picture = document.createElement('canvas');
       picture.width = size.width;
