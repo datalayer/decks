@@ -5,7 +5,8 @@
  */
 
 /**
- * Every deck the catalog knows, grouped by family, with a button to make one.
+ * Every deck the catalog knows, grouped by family. The page beside it names
+ * the list and offers New deck, so the sidebar does not say them twice.
  *
  * Contributed to the host's sidebar slot. It reads the catalog live, so a deck
  * that arrives from the server, from a contribution or from the dialog is in
@@ -16,18 +17,16 @@
 
 import type { JSX } from 'react';
 import { useMemo } from 'react';
-import { ActionList, ActionMenu, Box, Button, Heading, IconButton, Text } from '@primer/react';
+import { ActionList, ActionMenu, Box, IconButton, Text } from '@primer/react';
 import {
   KebabHorizontalIcon,
   PencilIcon,
-  PlusIcon,
   ProjectRoadmapIcon,
   TrashIcon,
 } from '@primer/octicons-react';
 import { deckId, type DeckEntry } from '../registry/catalog';
 import {
   beginDelete,
-  beginNewDeck,
   beginRename,
   openDeck,
   useDeckEntries,
@@ -183,20 +182,6 @@ export const DeckList = (): JSX.Element => {
         minWidth: 240,
       }}
     >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Heading as="h2" sx={{ fontSize: 2 }}>
-          Decks
-        </Heading>
-        <Button size="small" leadingVisual={PlusIcon} onClick={beginNewDeck}>
-          New deck
-        </Button>
-      </Box>
       {error ? <Text sx={{ color: 'attention.fg', fontSize: 0 }}>{error}</Text> : null}
       {entries.length === 0 ? (
         <Text sx={{ color: 'fg.muted', fontSize: 1 }}>
