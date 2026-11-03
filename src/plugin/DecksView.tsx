@@ -12,9 +12,10 @@
  * @module plugin/DecksView
  */
 
-import type { JSX } from 'react';
+import type { JSX, KeyboardEvent } from 'react';
 import { useEffect } from 'react';
-import { Box, Button, Heading, Text } from '@primer/react';
+import { Button, Heading, Text } from '@primer/react';
+import { Box, Card } from '@datalayer/primer-addons';
 import { PlusIcon } from '@primer/octicons-react';
 import { useContributions } from '@datalayer/reactor/react';
 import { DeckAccess } from '../DeckAccess';
@@ -101,26 +102,28 @@ export const DecksView = (): JSX.Element => {
             {entries.map((entry) => {
               const id = deckId(entry);
               return (
-                <Box
+                // The theme's card: its radius, surface and hover (the user, 3 November 2026).
+                <Card
                   key={id}
-                  as="button"
-                  type="button"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={entry.spec.deck.title}
                   onClick={() => openDeck(id)}
-                  sx={{
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                    color: 'fg.default',
-                    bg: 'canvas.subtle',
-                    border: '1px solid',
-                    borderColor: 'border.default',
-                    borderRadius: 2,
-                    p: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1,
-                    '&:hover': { borderColor: 'accent.emphasis' },
+                  onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      openDeck(id);
+                    }
                   }}
+                  interactive
+                  border
+                  shadow="none"
+                  display="flex"
+                  flexDirection="column"
+                  gap={1}
+                  p={3}
+                  minWidth={0}
+                  overflow="hidden"
                 >
                   <Text sx={{ fontSize: 0, color: 'fg.muted' }}>
                     {entry.collection ?? '\u00a0'}
@@ -133,7 +136,7 @@ export const DecksView = (): JSX.Element => {
                     {entry.spec.slides.length} slides
                     {entry.source === 'session' ? ' · unsaved' : ''}
                   </Text>
-                </Box>
+                </Card>
               );
             })}
           </Box>
