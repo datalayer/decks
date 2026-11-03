@@ -156,7 +156,9 @@ const carryVariables = (element: HTMLElement): (() => void) => {
   };
   if (element.computedStyleMap) {
     for (const [name, values] of element.computedStyleMap()) {
-      set(name, String(values[0]));
+      // An iterable in the DOM's types, not an array: its first value.
+      const [first] = values;
+      set(name, String(first));
     }
   } else {
     const style = getComputedStyle(element);
