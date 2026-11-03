@@ -57,40 +57,32 @@ export const DecksView = (): JSX.Element => {
   if (!open) {
     return (
       <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          maxWidth: 1280,
-          mx: 'auto',
-          px: 4,
-          py: [5, 6],
-        }}
+        // The host's page frames it: no margins of its own, the title as a
+        // page's title, the action on its line, what it is said below
+        // (as the platform's other pages, 3 November 2026).
+        sx={{ display: 'flex', flexDirection: 'column' }}
       >
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: 3,
+            mb: 1,
           }}
         >
-          <Box>
-            <Heading as="h2" sx={{ fontSize: 4 }}>
-              Decks
-            </Heading>
-            <Text sx={{ color: 'fg.muted' }}>
-              Presentations described as data.{' '}
-              {entries.length > 0
-                ? 'Open one, or start a new one.'
-                : 'There is nothing to open yet; start a new one.'}
-            </Text>
-          </Box>
+          <Heading sx={{ fontSize: 4, fontWeight: 'bold', mb: 1 }}>Decks</Heading>
           <Button variant="primary" leadingVisual={PlusIcon} onClick={beginNewDeck}>
             New deck
           </Button>
         </Box>
+        <Text sx={{ color: 'fg.muted', display: 'block', mb: 3 }}>
+          Presentations described as data.{' '}
+          {entries.length > 0
+            ? 'Open one, or start a new one.'
+            : 'There is nothing to open yet; start a new one.'}
+        </Text>
         {entries.length > 0 ? (
           <Box
             sx={{
