@@ -93,3 +93,16 @@ def test_serve_names_the_reactor_plugins_to_the_interface(tmp_path: Path, monkey
     assert plain.exit_code == 0, plain.output
     assert captured["config"]["reactor_plugins"] == []
     assert "Reactor plugins:" not in plain.output
+
+
+def test_every_description_keeps_the_house_style() -> None:
+    # The line a listing shows beside a command, as the Datalayer CLI lists
+    # this package's: one sentence ending with a period, a capital, short
+    # enough not to wrap, not opening with the command's own name.
+    from reactor.cli import help_style_violations
+
+    host = typer.Typer(name="datalayer")
+    host.command("other", help="Do the other thing.")(lambda: None)
+    host.add_typer(app)
+
+    assert help_style_violations(host) == []

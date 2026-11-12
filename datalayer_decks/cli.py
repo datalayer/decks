@@ -36,7 +36,7 @@ from .storage import DeckNotFound, DeckStore
 
 app = typer.Typer(
     name="decks",
-    help="Presentations described as data: serve them, list them, look at one.",
+    help="Serve, list and look at presentations described as data.",
     no_args_is_help=True,
 )
 
@@ -209,7 +209,10 @@ def delete(
     decks_dir: Optional[Path] = typer.Option(None, "--decks-dir"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Do not ask."),
 ) -> None:
-    """Delete a deck. Irreversible."""
+    """Delete a deck.
+
+    Irreversible.
+    """
     store = _store(decks_dir)
     try:
         store.get(deck_id)
