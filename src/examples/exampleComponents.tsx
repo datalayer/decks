@@ -34,7 +34,7 @@
  */
 
 import type { CSSProperties, JSX } from 'react';
-import { AppearanceControlsWithStore, useThemeStore } from '@datalayer/primer-addons';
+import { AppearanceControls, useThemeStore } from '@datalayer/primer-addons';
 import { SvgAgentsHomeHero } from '@datalayer/design';
 
 const card: CSSProperties = {
@@ -77,7 +77,7 @@ const note: CSSProperties = {
 export const AppearanceChooser = (): JSX.Element => (
   <div style={card}>
     <div style={label}>Appearance</div>
-    <AppearanceControlsWithStore useStore={useThemeStore} />
+    <AppearanceControls layout="inline" useStore={useThemeStore} />
     <div style={note}>
       The shell’s own control, on the slide — writing to the theme store the
       header writes to. Pick one: the drawing beside it is reading the same
