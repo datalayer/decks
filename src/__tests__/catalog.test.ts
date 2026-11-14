@@ -6,15 +6,19 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  DECKS_ROUTE,
   clearDecks,
+  deckAccessKey,
   deckById,
   deckId,
   deckPath,
   deckPrintPath,
+  decksRoute,
   listDecks,
   registerDecks,
   resolveDeckRoute,
   resolveSlide,
+  setDecksRoute,
   subscribeDecks,
   unregisterDeck,
   type DeckEntry,
@@ -27,7 +31,10 @@ const spec = (title: string): DeckSpec =>
 const startups: DeckEntry = { collection: 'startups', slug: 'seed', spec: spec('Seed') };
 const investors: DeckEntry = { slug: 'investors', spec: spec('Investors') };
 
-afterEach(() => clearDecks());
+afterEach(() => {
+  clearDecks();
+  setDecksRoute(DECKS_ROUTE);
+});
 
 describe('the deck catalog', () => {
   it('starts empty and lists what is registered, in order', () => {
@@ -74,6 +81,32 @@ describe('the deck catalog', () => {
     expect(deckPrintPath(investors, { variant: 'datalayer', colorMode: 'dark' })).toBe(
       '/decks/investors/print?theme=datalayer&mode=dark',
     );
+  });
+
+  it('builds addresses under the route a host sets, the print link included', () => {
+    expect(decksRoute()).toBe('/decks');
+    setDecksRoute('/visitors/decks');
+    expect(decksRoute()).toBe('/visitors/decks');
+    expect(deckPath(startups, 3)).toBe('/visitors/decks/startups/seed/3');
+    expect(deckPrintPath(investors, { variant: 'loop', colorMode: 'light' })).toBe(
+      '/visitors/decks/investors/print?theme=loop&mode=light',
+    );
+  });
+
+  it('keeps the password key /decks/<id> whatever the route, so saved passwords survive a move', () => {
+    expect(deckAccessKey(startups)).toBe('/decks/startups/seed');
+    setDecksRoute('/visitors/decks');
+    expect(deckAccessKey(startups)).toBe('/decks/startups/seed');
+    expect(deckAccessKey(investors)).toBe('/decks/investors');
+  });
+
+  it('refuses a route that is not an absolute path of plain segments, and keeps the one it had', () => {
+    setDecksRoute('/visitors/decks');
+    for (const bad of ['', 'decks', '/', '/decks/', '//decks', '/decks?x=1', '/decks#a', '/de cks', 'https://x.io/decks']) {
+      expect(() => setDecksRoute(bad)).toThrow(/absolute path/);
+    }
+    expect(() => setDecksRoute(undefined as unknown as string)).toThrow(/absolute path/);
+    expect(decksRoute()).toBe('/visitors/decks');
   });
 
   it('resolves the ambiguous segments of an address against the catalog', () => {

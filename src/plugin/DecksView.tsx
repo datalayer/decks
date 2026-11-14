@@ -21,8 +21,8 @@ import { useContributions } from '@datalayer/reactor/react';
 import { DeckAccess } from '../DeckAccess';
 import { DeckView } from '../DeckView';
 import {
+  deckAccessKey,
   deckId,
-  deckPath,
   deckPrintPath,
   registerDecks,
   type DeckEntry,
@@ -138,7 +138,7 @@ export const DecksView = (): JSX.Element => {
   }
 
   return (
-    <DeckAccess deckId={deckPath(open)} title={open.spec.deck.title} access={open.spec.deck.access}>
+    <DeckAccess deckId={deckAccessKey(open)} title={open.spec.deck.title} access={open.spec.deck.access}>
       <DeckView
         spec={open.spec}
         printPath={deckPrintPath(open, {

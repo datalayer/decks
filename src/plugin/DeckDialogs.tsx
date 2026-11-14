@@ -18,7 +18,7 @@
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { Box, Dialog, FormControl, Text, TextInput } from '@primer/react';
-import { deckById } from '../registry/catalog';
+import { deckById, decksRoute } from '../registry/catalog';
 import { NewDeckDialog } from './NewDeckDialog';
 import {
   cancelDelete,
@@ -54,7 +54,7 @@ export const RenameDeckDialog = (): JSX.Element | null => {
     return null;
   }
 
-  const address = `/decks/${collection.trim() ? `${collection.trim()}/` : ''}${slugify(slug || title)}`;
+  const address = `${decksRoute()}/${collection.trim() ? `${collection.trim()}/` : ''}${slugify(slug || title)}`;
   const submit = (): void => {
     if (!title.trim()) {
       return;
@@ -65,7 +65,7 @@ export const RenameDeckDialog = (): JSX.Element | null => {
   return (
     <Dialog
       title="Rename the deck"
-      subtitle={`Now “${entry.spec.deck.title}”, at /decks/${renaming}.`}
+      subtitle={`Now “${entry.spec.deck.title}”, at ${decksRoute()}/${renaming}.`}
       onClose={cancelRename}
       footerButtons={[
         { buttonType: 'default', content: 'Cancel', onClick: cancelRename },
@@ -149,7 +149,7 @@ export const DeleteDeckDialog = (): JSX.Element | null => {
     >
       <Text as="p" sx={{ m: 0 }}>
         Delete <strong>{entry.spec.deck.title}</strong> ({entry.spec.slides.length} slides, at{' '}
-        <code>/decks/{deleting}</code>)? It leaves the list
+        <code>{decksRoute()}/{deleting}</code>)? It leaves the list
         {backendUrl && entry.source !== 'bundled' ? ' and the server' : ''}. There is no undo.
       </Text>
     </Dialog>

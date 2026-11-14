@@ -27,14 +27,14 @@ import {
   type ThemeVariant,
 } from '@datalayer/primer-addons';
 import { DeckRenderer } from './runtime/DeckRenderer';
-import { deckPath, type DeckEntry } from './registry/catalog';
+import { deckAccessKey, type DeckEntry } from './registry/catalog';
 import { DeckAccess } from './DeckAccess';
 import { useDecksTheme } from './host';
 
 const PRINT_FALLBACK_MS = 6000;
 
 /**
- * The deck as pages, printing itself: `/decks/:collection/:slug/print`.
+ * The deck as pages, printing itself: `<route>/:collection/:slug/print`.
  *
  * Opened by the Download PDF button in a tab of its own, because Reveal's
  * print view needs the whole page — it sizes the body, tags the document
@@ -128,7 +128,7 @@ export const DeckPrintView = ({
         hand the whole thing over as a PDF.
       */}
       <DeckAccess
-        deckId={deckPath(entry)}
+        deckId={deckAccessKey(entry)}
         title={entry.spec.deck.title}
         access={entry.spec.deck.access}
       >

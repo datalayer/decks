@@ -25,7 +25,7 @@ import {
   replaceDeck,
   resetDecksState,
 } from '../plugin/store';
-import { clearDecks, deckById, listDecks } from '../registry/catalog';
+import { DECKS_ROUTE, clearDecks, deckById, listDecks, setDecksRoute } from '../registry/catalog';
 import type { DeckSpec } from '../types';
 
 const spec = (title: string, slides = 3): DeckSpec =>
@@ -147,6 +147,19 @@ describe('present and print', () => {
       path: '/decks/c/p/print',
       opened: false,
     });
+  });
+
+  it('opens the print view under the route the host set', async () => {
+    const open = vi.fn(() => ({}) as Window);
+    vi.stubGlobal('open', open);
+    setDecksRoute('/visitors/decks');
+    try {
+      await addDeck({ collection: 'c', slug: 'p', spec: spec('P') });
+      expect(printOpenDeck()).toEqual({ path: '/visitors/decks/c/p/print', opened: true });
+      expect(open).toHaveBeenCalledWith('/visitors/decks/c/p/print', '_blank', 'noopener');
+    } finally {
+      setDecksRoute(DECKS_ROUTE);
+    }
   });
 
   it('present is blocked, not silent, when the browser will not go fullscreen', async () => {

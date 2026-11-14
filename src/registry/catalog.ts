@@ -13,15 +13,40 @@
  * just made — and everything that lists decks re-renders. The definitions
  * themselves stay wherever they were written; this only knows they exist.
  *
- * Addresses are unchanged: a deck of a family is `/decks/startups/x`, one that
- * stands alone is `/decks/investors`, a slide is a trailing number.
+ * A deck of a family is `<route>/startups/x`, one that stands alone is
+ * `<route>/investors`, a slide is a trailing number. The route is `/decks`
+ * unless the host says otherwise with `setDecksRoute` — the landing serves its
+ * presentations under `/visitors/decks`.
  *
  * @module registry/catalog
  */
 
 import type { DeckSpec } from '../types';
 
+/** The engine's own route prefix, the one its app and server serve. */
 export const DECKS_ROUTE = '/decks';
+
+let route = DECKS_ROUTE;
+
+/**
+ * Where this host serves its decks: what `deckPath`, `deckPrintPath` and the
+ * print command build on. Call it once, before anything builds an address.
+ *
+ * Throws on a prefix that is not an absolute path of plain segments —
+ * `/visitors/decks`, never `decks`, `/decks/`, `//decks` or one with a query —
+ * rather than build addresses that go nowhere.
+ */
+export const setDecksRoute = (prefix: string): void => {
+  if (typeof prefix !== 'string' || !/^(\/[A-Za-z0-9._~-]+)+$/.test(prefix)) {
+    throw new Error(
+      `The decks route must be an absolute path such as "/visitors/decks", not ${JSON.stringify(prefix)}.`,
+    );
+  }
+  route = prefix;
+};
+
+/** The route prefix in use: `DECKS_ROUTE` unless a host set another. */
+export const decksRoute = (): string => route;
 
 export type DeckEntry = {
   /** A family of decks, for the address and for grouping. Optional. */
@@ -87,9 +112,18 @@ export const deckPath = (
   entry: Pick<DeckEntry, 'collection' | 'slug'>,
   slide?: number,
 ): string => {
-  const base = `${DECKS_ROUTE}/${deckId(entry)}`;
+  const base = `${route}/${deckId(entry)}`;
   return slide && slide > 1 ? `${base}/${slide}` : base;
 };
+
+/**
+ * The key a deck's remembered password is kept under: `/decks/<id>`, whatever
+ * the route. An identity, not an address — it was the address when the route
+ * was fixed, and a host that moves its route must not forget every password
+ * its readers saved.
+ */
+export const deckAccessKey = (entry: Pick<DeckEntry, 'collection' | 'slug'>): string =>
+  `${DECKS_ROUTE}/${deckId(entry)}`;
 
 /** A slide number from an address segment: `9`, `-1` for the last, else 1. */
 export const resolveSlide = (segment: string | undefined, total: number): number => {
@@ -131,7 +165,7 @@ export const deckById = (id: string): DeckEntry | undefined =>
 /**
  * Resolve the ambiguous segments of a deck address against the catalog.
  *
- * `/decks/a/b` is either a family and a deck, or a deck and a slide; a router
+ * `<route>/a/b` is either a family and a deck, or a deck and a slide; a router
  * pattern cannot tell them apart and the catalog can. The nested reading wins
  * when it exists, so a family whose name is also a standalone deck's slide
  * number is the one case this cannot serve — and nobody names a family `9`.
