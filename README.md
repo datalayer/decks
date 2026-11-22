@@ -168,7 +168,7 @@ reactor rather than declared — see [`plugins/ai-agents`](./plugins/ai-agents).
 `example-decks` and `worker-pitcher` (the landing's deck editor agent) name
 the same frontend toolset, `decks`, in agentspecs.
 
-In a Loop (`@datalayer/agent-runtimes`), `@datalayer/loop-plugin-decks`
+In an Agent (`@datalayer/agent-runtimes`), `@datalayer/agent-plugin-decks`
 mounts this plugin beside the chat — the list in the sidebar, a **Deck**
 editor view, a menu on the composer — and the chat hands the agent the
 bundle's commands as tools, so an agent writes and drives a deck with no

@@ -24,7 +24,7 @@ make example
 
 They ship in the package as `@datalayer/decks/examples` (`exampleDecks`). The
 app registers them all at start-up (`app/src/App.tsx`), so `datalayer decks serve`
-opens with them in the list beside whatever the server holds; the Loop's
+opens with them in the list beside whatever the server holds; the Agent's
 DecksAgent example does the same. To register your
 own in any host:
 

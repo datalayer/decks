@@ -52,9 +52,9 @@ export type DecksPluginOptions = {
    */
   controls?: string[];
   /**
-   * The primer-addons theme variant the decks wear: `loop` (what datalayer.ai
+   * The primer-addons theme variant the decks wear: `agent` (what datalayer.ai
    * wears) when absent, or `datalayer`, `spatial` and the others. Its face is
-   * loaded with it when it is `loop`'s Inter.
+   * loaded with it when it is `agent`'s Inter.
    */
   theme?: string;
 };
@@ -87,7 +87,7 @@ export type DecksGlobalData = {
   theme: string;
 };
 
-export const DEFAULT_THEME = 'loop';
+export const DEFAULT_THEME = 'agent';
 
 export const DEFAULT_CONTROLS: readonly string[] = ['notes', 'play', 'present'];
 

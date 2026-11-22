@@ -8,7 +8,7 @@
  * The deck itself, in the browser: the engine's `DeckView` under a Primer
  * theme, checked by `validateDeckSpec` before it is drawn.
  *
- * The theme is pinned to the site's (the plugin's `theme`, `loop` — what
+ * The theme is pinned to the site's (the plugin's `theme`, `agent` — what
  * datalayer.ai wears — when absent) and the colour mode follows the site's own
  * switch, rather than the deck offering an appearance chooser: a deck that
  * repainted itself while the documentation around it stayed put would read as
@@ -24,8 +24,8 @@ import type { JSX } from 'react';
 import { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { Flash } from '@primer/react';
 import { DatalayerThemeProvider, themeConfigs, useThemeStore, type ThemeVariant } from '@datalayer/primer-addons';
-// The `loop` theme's face, Inter, served from the site's own build.
-import '@datalayer/primer-addons/style/loop-face.css';
+// The `agent` theme's face, Inter, served from the site's own build.
+import '@datalayer/primer-addons/style/agent-face.css';
 import {
   DECK_CONTROLS,
   DeckView,
@@ -59,7 +59,7 @@ export const controlsOf = (names: readonly string[]): DeckControl[] =>
   DECK_CONTROLS.filter(control => names.includes(control));
 
 export default function DeckClient({ spec, controls, theme }: DeckClientProps): JSX.Element {
-  const variant = (theme in themeConfigs ? theme : 'loop') as ThemeVariant;
+  const variant = (theme in themeConfigs ? theme : 'agent') as ThemeVariant;
   const config = themeConfigs[variant];
   const colorMode = useSyncExternalStore(watchColorMode, siteColorMode, () => 'light' as const);
   const shown = controlsOf(controls.split(',').map(name => name.trim()));

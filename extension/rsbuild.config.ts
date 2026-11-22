@@ -11,7 +11,7 @@
  * `datalayer_decks/extension.py` publishes this as the frontend half of the
  * extension: a Reactor host that bootstraps its installed extensions loads
  * `remoteEntry.js`, asks the container for `./plugin`, and gets `DecksPlugin`
- * — the same plugin the standalone app and the Loop mount by import. React,
+ * — the same plugin the standalone app and the Agent mount by import. React,
  * the reactor and Primer are `shared` singletons, so the plugin runs on the
  * host's copies rather than bringing a second React along.
  *

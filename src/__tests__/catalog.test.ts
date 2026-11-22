@@ -88,8 +88,8 @@ describe('the deck catalog', () => {
     setDecksRoute('/visitors/decks');
     expect(decksRoute()).toBe('/visitors/decks');
     expect(deckPath(startups, 3)).toBe('/visitors/decks/startups/seed/3');
-    expect(deckPrintPath(investors, { variant: 'loop', colorMode: 'light' })).toBe(
-      '/visitors/decks/investors/print?theme=loop&mode=light',
+    expect(deckPrintPath(investors, { variant: 'agent', colorMode: 'light' })).toBe(
+      '/visitors/decks/investors/print?theme=agent&mode=light',
     );
   });
 
