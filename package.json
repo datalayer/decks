@@ -1,6 +1,6 @@
 {
   "name": "@datalayer/decks",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/datalayer/decks.git"
@@ -70,7 +70,7 @@
   },
   "peerDependencies": {
     "@datalayer/design": "^1.0.2",
-    "@datalayer/primer-addons": "^1.0.23",
+    "@datalayer/primer-addons": "^1.0.54",
     "@datalayer/reactor": "^1.0.4",
     "@primer/octicons-react": ">=19.42.0",
     "@primer/react": "^37.31.0",

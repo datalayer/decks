@@ -62,7 +62,7 @@ export default function Deck({ spec, controls }: DeckProps): JSX.Element {
     <BrowserOnly fallback={placeholder}>
       {() => (
         <Suspense fallback={placeholder}>
-          <DeckClient spec={spec} controls={shown} theme={site?.theme ?? 'loop'} />
+          <DeckClient spec={spec} controls={shown} theme={site?.theme ?? 'agent'} />
         </Suspense>
       )}
     </BrowserOnly>

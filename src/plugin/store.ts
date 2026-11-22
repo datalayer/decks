@@ -59,7 +59,7 @@ export type DecksState = {
   /**
    * Bumped whenever someone asks to *see* decks — a deck opened, the list
    * shown — even when nothing else changed. A host with its own notion of
-   * what is on screen (a Loop with the deck as one editor among several)
+   * what is on screen (an Agent with the deck as one editor among several)
    * follows this to bring the decks into view; a "show the decks" command
    * that only cleared a selection already clear had nothing for it to follow.
    */
