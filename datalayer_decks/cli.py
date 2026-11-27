@@ -12,6 +12,7 @@ same group.
 
     datalayer decks serve          # the API and the interface, one origin
     datalayer decks serve talk.yaml  # load and open one YAML deck
+    datalayer decks pdf talk.yaml    # the deck's print view saved as talk.pdf
     datalayer decks list           # what the store holds
     datalayer decks show <id>
     datalayer decks delete <id>
@@ -22,10 +23,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import socket
 import tempfile
+import threading
+import time
 import webbrowser
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlencode
 
 import typer
 import yaml
@@ -168,6 +173,110 @@ def serve(
             os.environ["DATALAYER_DECKS_DIR"] = old_directory
         if temporary is not None:
             temporary.cleanup()
+
+
+def _print_query(specification: dict[str, Any], theme: Optional[str], mode: Optional[str]) -> str:
+    """The print view's query: the theme and colour mode asked, else the deck's own."""
+    metadata = specification.get("deck") or {}
+    chosen = {
+        "theme": theme or metadata.get("theme"),
+        "mode": mode or metadata.get("colorMode") or "light",
+    }
+    return urlencode({key: value for key, value in chosen.items() if value})
+
+
+def _pdf_pages(path: Path) -> int:
+    """The number of pages of a PDF, counted from its page objects."""
+    return len(re.findall(rb"/Type\s*/Page[^s]", path.read_bytes()))
+
+
+@app.command()
+def pdf(
+    deck: Path = typer.Argument(
+        ...,
+        exists=True,
+        dir_okay=False,
+        readable=True,
+        resolve_path=True,
+        help="The YAML deck to export.",
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="The PDF to write (else the deck's name with .pdf, beside it)."
+    ),
+    theme: Optional[str] = typer.Option(None, help="Theme variant (else the deck's `theme`), e.g. metal."),
+    mode: Optional[str] = typer.Option(None, help="Colour mode: light or dark (else the deck's `colorMode`, else light)."),
+    max_pages: Optional[int] = typer.Option(
+        None, "--max-pages", help="Fail when the PDF has more pages than this (a slide that overflows adds one)."
+    ),
+    wait: float = typer.Option(4.0, help="Seconds to let diagrams and fonts draw before printing."),
+) -> None:
+    """Export a YAML deck to PDF: its print view, one slide a page, in headless Chromium.
+
+    Needs Playwright and its Chromium (`pip install playwright && playwright install chromium`).
+    """
+    import uvicorn
+
+    from .host import create_app, ui_directory
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as error:
+        raise typer.BadParameter(
+            "Playwright is needed: pip install playwright && playwright install chromium"
+        ) from error
+    if ui_directory() is None:
+        raise typer.BadParameter(
+            "The interface has not been built: build it with `make build-app` in the "
+            "datalayer_decks checkout, or install the wheel, which carries it."
+        )
+    try:
+        specification = _load_deck(deck)
+    except ValueError as error:
+        raise typer.BadParameter(str(error), param_hint="DECK") from error
+
+    target = (output or deck.with_suffix(".pdf")).resolve()
+    slug = _file_slug(deck)
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+
+    old_directory = os.environ.get("DATALAYER_DECKS_DIR")
+    with tempfile.TemporaryDirectory(prefix="datalayer-decks-pdf-") as directory:
+        try:
+            DeckStore(Path(directory)).put("local", slug, specification)
+            application = create_app(with_ui=True, decks_dir=Path(directory))
+            server = uvicorn.Server(uvicorn.Config(application, host="127.0.0.1", port=port, log_level="warning"))
+            thread = threading.Thread(target=server.run, daemon=True)
+            thread.start()
+            deadline = time.time() + 30
+            while not server.started:
+                if time.time() > deadline or not thread.is_alive():
+                    raise typer.Exit(code=1)
+                time.sleep(0.1)
+            url = f"http://127.0.0.1:{port}/decks/local/{slug}/print?{_print_query(specification, theme, mode)}"
+            try:
+                with sync_playwright() as playwright:
+                    browser = playwright.chromium.launch()
+                    page = browser.new_page(viewport={"width": 1920, "height": 1080})
+                    page.goto(url, wait_until="networkidle")
+                    page.wait_for_selector(".reveal .slides section", timeout=60_000)
+                    page.wait_for_timeout(wait * 1000)
+                    page.pdf(path=str(target), prefer_css_page_size=True, print_background=True)
+                    browser.close()
+            finally:
+                server.should_exit = True
+                thread.join(timeout=10)
+        finally:
+            if old_directory is None:
+                os.environ.pop("DATALAYER_DECKS_DIR", None)
+            else:
+                os.environ["DATALAYER_DECKS_DIR"] = old_directory
+
+    pages = _pdf_pages(target)
+    typer.echo(f"{target}: {pages} pages")
+    if max_pages is not None and pages > max_pages:
+        typer.secho(f"Over the limit of {max_pages} pages.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=1)
 
 
 @app.command("list")

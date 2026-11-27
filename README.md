@@ -26,7 +26,14 @@ pip install datalayer_decks
 datalayer decks serve          # http://127.0.0.1:8797, opens the browser
 datalayer decks serve my-deck.yaml  # load YAML and open this deck directly
 datalayer decks list
+datalayer decks pdf my-deck.yaml   # the print view saved as my-deck.pdf
 ```
+
+`pdf` serves the deck on a free local port, opens its print view in headless
+Chromium and saves it, one slide a page, in the deck's `theme` and `colorMode`
+(or `--theme` and `--mode`); `--max-pages N` fails when a slide overflows onto a
+second page. It needs the `pdf` extra: `pip install 'datalayer_decks[pdf]'`
+then `playwright install chromium`.
 
 Installing the package adds a `decks` group to the Datalayer CLI — `serve`,
 `list`, `show`, `delete` — through the reactor's `datalayer.cli` entry-point

@@ -106,3 +106,18 @@ def test_every_description_keeps_the_house_style() -> None:
     host.add_typer(app)
 
     assert help_style_violations(host) == []
+
+
+def test_pdf_prints_in_the_theme_asked_else_the_decks_own() -> None:
+    from datalayer_decks.cli import _print_query
+
+    deck = {"deck": {"title": "T", "theme": "metal", "colorMode": "dark"}}
+    assert _print_query(deck, None, None) == "theme=metal&mode=dark"
+    assert _print_query(deck, "datalayer", "light") == "theme=datalayer&mode=light"
+    assert _print_query({"deck": {"title": "T"}}, None, None) == "mode=light"
+
+
+def test_pdf_is_a_command_of_the_group() -> None:
+    result = CliRunner().invoke(app, ["pdf", "--help"])
+    assert result.exit_code == 0
+    assert "--max-pages" in result.output
