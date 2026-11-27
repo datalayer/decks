@@ -13,6 +13,7 @@ same group.
     datalayer decks serve          # the API and the interface, one origin
     datalayer decks serve talk.yaml  # load and open one YAML deck
     datalayer decks pdf talk.yaml    # the deck's print view saved as talk.pdf
+    datalayer decks collage talk.yaml  # every slide on one page: talk-collage.png and .pdf
     datalayer decks list           # what the store holds
     datalayer decks show <id>
     datalayer decks delete <id>
@@ -20,6 +21,7 @@ same group.
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import re
@@ -28,8 +30,9 @@ import tempfile
 import threading
 import time
 import webbrowser
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 from urllib.parse import urlencode
 
 import typer
@@ -190,30 +193,11 @@ def _pdf_pages(path: Path) -> int:
     return len(re.findall(rb"/Type\s*/Page[^s]", path.read_bytes()))
 
 
-@app.command()
-def pdf(
-    deck: Path = typer.Argument(
-        ...,
-        exists=True,
-        dir_okay=False,
-        readable=True,
-        resolve_path=True,
-        help="The YAML deck to export.",
-    ),
-    output: Optional[Path] = typer.Option(
-        None, "--output", "-o", help="The PDF to write (else the deck's name with .pdf, beside it)."
-    ),
-    theme: Optional[str] = typer.Option(None, help="Theme variant (else the deck's `theme`), e.g. metal."),
-    mode: Optional[str] = typer.Option(None, help="Colour mode: light or dark (else the deck's `colorMode`, else light)."),
-    max_pages: Optional[int] = typer.Option(
-        None, "--max-pages", help="Fail when the PDF has more pages than this (a slide that overflows adds one)."
-    ),
-    wait: float = typer.Option(4.0, help="Seconds to let diagrams and fonts draw before printing."),
-) -> None:
-    """Export a YAML deck to PDF: its print view, one slide a page, in headless Chromium.
-
-    Needs Playwright and its Chromium (`pip install playwright && playwright install chromium`).
-    """
+@contextmanager
+def _print_view(
+    deck: Path, theme: Optional[str], mode: Optional[str], wait: float, scale: float = 1.0
+) -> Iterator[Any]:
+    """A headless Chromium page on the deck's print view, served on a free local port."""
     import uvicorn
 
     from .host import create_app, ui_directory
@@ -222,7 +206,7 @@ def pdf(
         from playwright.sync_api import sync_playwright
     except ImportError as error:
         raise typer.BadParameter(
-            "Playwright is needed: pip install playwright && playwright install chromium"
+            "Playwright is needed: pip install 'datalayer_decks[pdf]' && playwright install chromium"
         ) from error
     if ui_directory() is None:
         raise typer.BadParameter(
@@ -234,14 +218,12 @@ def pdf(
     except ValueError as error:
         raise typer.BadParameter(str(error), param_hint="DECK") from error
 
-    target = (output or deck.with_suffix(".pdf")).resolve()
     slug = _file_slug(deck)
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
-
     old_directory = os.environ.get("DATALAYER_DECKS_DIR")
-    with tempfile.TemporaryDirectory(prefix="datalayer-decks-pdf-") as directory:
+    with tempfile.TemporaryDirectory(prefix="datalayer-decks-print-") as directory:
         try:
             DeckStore(Path(directory)).put("local", slug, specification)
             application = create_app(with_ui=True, decks_dir=Path(directory))
@@ -257,11 +239,13 @@ def pdf(
             try:
                 with sync_playwright() as playwright:
                     browser = playwright.chromium.launch()
-                    page = browser.new_page(viewport={"width": 1920, "height": 1080})
+                    page = browser.new_page(viewport={"width": 1920, "height": 1080}, device_scale_factor=scale)
+                    # The print view opens the browser's print dialog once ready: not here.
+                    page.add_init_script("window.print = () => {}")
                     page.goto(url, wait_until="networkidle")
                     page.wait_for_selector(".reveal .slides section", timeout=60_000)
                     page.wait_for_timeout(wait * 1000)
-                    page.pdf(path=str(target), prefer_css_page_size=True, print_background=True)
+                    yield page
                     browser.close()
             finally:
                 server.should_exit = True
@@ -272,11 +256,96 @@ def pdf(
             else:
                 os.environ["DATALAYER_DECKS_DIR"] = old_directory
 
+
+_DECK_ARGUMENT = typer.Argument(..., exists=True, dir_okay=False, readable=True, resolve_path=True, help="The YAML deck.")
+_THEME_OPTION = typer.Option(None, help="Theme variant (else the deck's `theme`), e.g. metal.")
+_MODE_OPTION = typer.Option(None, help="Colour mode: light or dark (else the deck's `colorMode`, else light).")
+_WAIT_OPTION = typer.Option(4.0, help="Seconds to let diagrams and fonts draw before capturing.")
+
+
+@app.command()
+def pdf(
+    deck: Path = _DECK_ARGUMENT,
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="The PDF to write (else the deck's name with .pdf, beside it)."
+    ),
+    theme: Optional[str] = _THEME_OPTION,
+    mode: Optional[str] = _MODE_OPTION,
+    max_pages: Optional[int] = typer.Option(
+        None, "--max-pages", help="Fail when the PDF has more pages than this (a slide that overflows adds one)."
+    ),
+    wait: float = _WAIT_OPTION,
+) -> None:
+    """Export a YAML deck to PDF: its print view, one slide a page, in headless Chromium.
+
+    Needs the pdf extra: pip install 'datalayer_decks[pdf]' && playwright install chromium.
+    """
+    target = (output or deck.with_suffix(".pdf")).resolve()
+    with _print_view(deck, theme, mode, wait) as page:
+        page.pdf(path=str(target), prefer_css_page_size=True, print_background=True)
     pages = _pdf_pages(target)
     typer.echo(f"{target}: {pages} pages")
     if max_pages is not None and pages > max_pages:
         typer.secho(f"Over the limit of {max_pages} pages.", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=1)
+
+
+def _collage_columns(count: int, columns: Optional[int]) -> int:
+    """The grid's width: the columns asked, else the smallest square that holds every slide."""
+    if columns is not None:
+        if columns < 1:
+            raise typer.BadParameter("--columns must be at least 1.")
+        return columns
+    width = 1
+    while width * width < count:
+        width += 1
+    return width
+
+
+@app.command()
+def collage(
+    deck: Path = _DECK_ARGUMENT,
+    png: Optional[Path] = typer.Option(None, "--png", help="The PNG to write (else <deck>-collage.png, beside it)."),
+    pdf_path: Optional[Path] = typer.Option(
+        None, "--pdf", help="The one-page PDF to write (else <deck>-collage.pdf, beside it)."
+    ),
+    columns: Optional[int] = typer.Option(None, help="Slides per row (else the smallest square grid)."),
+    gap: int = typer.Option(32, help="Pixels between slides and around them."),
+    scale: float = typer.Option(1.0, help="Device pixel ratio of each slide's capture (2 for a sharper collage)."),
+    theme: Optional[str] = _THEME_OPTION,
+    mode: Optional[str] = _MODE_OPTION,
+    wait: float = _WAIT_OPTION,
+) -> None:
+    """Every slide of a YAML deck on one page: a PNG and a one-page PDF, in a grid.
+
+    Needs the pdf extra: pip install 'datalayer_decks[pdf]' && playwright install chromium.
+    """
+    try:
+        from PIL import Image
+    except ImportError as error:
+        raise typer.BadParameter("Pillow is needed: pip install 'datalayer_decks[pdf]'") from error
+
+    stem = deck.with_suffix("")
+    png_target = (png or Path(f"{stem}-collage.png")).resolve()
+    pdf_target = (pdf_path or Path(f"{stem}-collage.pdf")).resolve()
+    with _print_view(deck, theme, mode, wait, scale) as page:
+        slides = page.query_selector_all(".pdf-page") or page.query_selector_all(".reveal .slides section")
+        if not slides:
+            raise typer.BadParameter("The print view drew no slide.", param_hint="DECK")
+        shots = [Image.open(io.BytesIO(slide.screenshot())).convert("RGB") for slide in slides]
+    width = max(shot.width for shot in shots)
+    height = max(shot.height for shot in shots)
+    across = _collage_columns(len(shots), columns)
+    down = -(-len(shots) // across)
+    sheet = Image.new("RGB", (across * width + (across + 1) * gap, down * height + (down + 1) * gap), "white")
+    for index, shot in enumerate(shots):
+        x = gap + (index % across) * (width + gap)
+        y = gap + (index // across) * (height + gap)
+        sheet.paste(shot, (x, y))
+    sheet.save(png_target)
+    sheet.save(pdf_target, "PDF", resolution=96.0)
+    typer.echo(f"{png_target}: {len(shots)} slides, {across} × {down}")
+    typer.echo(f"{pdf_target}: 1 page")
 
 
 @app.command("list")

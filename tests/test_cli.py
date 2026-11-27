@@ -121,3 +121,13 @@ def test_pdf_is_a_command_of_the_group() -> None:
     result = CliRunner().invoke(app, ["pdf", "--help"])
     assert result.exit_code == 0
     assert "--max-pages" in result.output
+    assert CliRunner().invoke(app, ["collage", "--help"]).exit_code == 0
+
+
+def test_collage_fills_the_smallest_square_unless_told() -> None:
+    from datalayer_decks.cli import _collage_columns
+
+    assert _collage_columns(10, None) == 4
+    assert _collage_columns(9, None) == 3
+    assert _collage_columns(1, None) == 1
+    assert _collage_columns(10, 5) == 5
