@@ -48,6 +48,7 @@ export type SlideType =
   | 'comparison'
   | 'flow'
   | 'feature-showcase'
+  | 'grid'
   | 'timeline'
   | 'chart'
   | 'logos'
@@ -165,6 +166,19 @@ export type FeatureShowcaseItemSpec = {
   status: string;
   href?: string;
   detail?: string;
+};
+
+export type GridItemSpec = {
+  title: string;
+  /** A line over the title: what the cell answers, its category, its status. */
+  kicker?: string;
+  /** A sentence or two under the title. */
+  body?: string;
+  /** A short mark in the corner badge: a step number, a symbol, an emoji. */
+  icon?: string;
+  href?: string;
+  /** Emphasises the one cell that is the point of the slide. */
+  current?: boolean;
 };
 
 export type ComparisonRowSpec = {
@@ -304,6 +318,20 @@ export type FeatureShowcaseSlideSpec = SlideBase & {
   channels?: string[];
 };
 
+/**
+ * Many things of one kind, as equal cells in rows: the features of a product,
+ * the members of a team, the cases of a catalogue. Up to ten read on one 16:9
+ * slide — two rows of five — before the words get too small.
+ */
+export type GridSlideSpec = SlideBase & {
+  type: 'grid';
+  /** Cells across; defaults to as many as fit the items in up to five. */
+  columns?: number;
+  items: GridItemSpec[];
+  /** A line under the grid: its source, its scope or its date. */
+  footnote?: string;
+};
+
 export type ChartSlideSpec = SlideBase & {
   type: 'chart';
   /** Bars, drawn in CSS: a deck chart is a shape, not a visualisation. */
@@ -366,6 +394,7 @@ export type SlideSpec =
   | ComparisonSlideSpec
   | FlowSlideSpec
   | FeatureShowcaseSlideSpec
+  | GridSlideSpec
   | TimelineSlideSpec
   | ChartSlideSpec
   | LogosSlideSpec

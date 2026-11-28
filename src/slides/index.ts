@@ -12,6 +12,7 @@ import {
   ComparisonSlide,
   FeatureShowcaseSlide,
   FlowSlide,
+  GridSlide,
   MetricsSlide,
   TimelineSlide,
 } from './DataSlides';
@@ -53,6 +54,7 @@ export const DEFAULT_LAYOUTS: Record<SlideType, SlideComponent> = {
   comparison: ComparisonSlide,
   flow: FlowSlide,
   'feature-showcase': FeatureShowcaseSlide,
+  grid: GridSlide,
   timeline: TimelineSlide,
   chart: ChartSlide,
   logos: LogosSlide,

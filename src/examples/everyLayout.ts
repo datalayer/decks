@@ -242,6 +242,29 @@ export const everyLayout: DeckSpec = {
     },
 
     {
+      id: 'grid',
+      type: 'grid',
+      title: 'Many things of one kind, as equal cells',
+      subtitle: 'Up to ten on one slide — two rows of five; the rows share the height.',
+      columns: 5,
+      items: [
+        { icon: '01', kicker: 'Write it', title: 'Spec', body: 'A deck is a value.' },
+        { icon: '02', kicker: 'Check it', title: 'Validate', body: 'Types first, then what a type cannot check.' },
+        { icon: '03', kicker: 'Dress it', title: 'Template', body: 'Tokens, and the types it draws its own way.' },
+        { icon: '04', kicker: 'Show it', title: 'Render', body: 'Reveal in the browser, the same frame in print.' },
+        { icon: '05', kicker: 'Say it', title: 'Notes', body: 'The argument the slide is making.', current: true },
+        { icon: '06', kicker: 'Hear it', title: 'Play', body: 'The notes read aloud, with captions.' },
+        { icon: '07', kicker: 'Keep it', title: 'Video', body: 'The slides and the voice, recorded.' },
+        { icon: '08', kicker: 'Print it', title: 'PDF', body: 'One slide a page.' },
+        { icon: '09', kicker: 'Share it', title: 'Link', body: 'An address for every slide.' },
+        { icon: '10', kicker: 'Grow it', title: 'Components', body: 'Your own, by name, from a registry.' },
+      ],
+      footnote: 'Each cell may link somewhere with `href`.',
+      notes:
+        'A grid is many things of one kind, as equal cells in rows. Up to ten fit on one slide, in two rows of five, and a cell never spills out of its row.',
+    },
+
+    {
       id: 'feature-showcase',
       type: 'feature-showcase',
       title: 'Five things around the one they share',

@@ -5,7 +5,7 @@
  */
 
 import { hasDeckComponent } from './registry/components';
-import { DEFAULT_LAYOUTS, columnsOf } from './slides';
+import { DEFAULT_LAYOUTS, GRID_MAX_COLUMNS, GRID_MAX_ITEMS, columnsOf } from './slides';
 import { deckTemplates } from './templates';
 import type { BlockSpec, ColumnsSlideSpec, DeckSpec, SlideSpec } from './types';
 
@@ -48,6 +48,7 @@ const REQUIRED: Partial<Record<SlideSpec['type'], string[]>> = {
   comparison: ['columns', 'rows'],
   flow: ['items'],
   'feature-showcase': ['title', 'coreTitle', 'features'],
+  grid: ['items'],
   timeline: ['items'],
   chart: ['series'],
   logos: ['logos'],
@@ -136,6 +137,31 @@ export const validateDeck = (spec: DeckSpec): DeckIssue[] => {
         where,
         message: 'A "feature-showcase" slide needs exactly five features.',
       });
+    }
+
+    if (slide.type === 'grid') {
+      if (
+        slide.columns !== undefined &&
+        !(Number.isInteger(slide.columns) && slide.columns >= 1 && slide.columns <= GRID_MAX_COLUMNS)
+      ) {
+        issues.push({
+          where,
+          message: `A "grid" slide's \`columns\` is a whole number from 1 to ${GRID_MAX_COLUMNS}.`,
+        });
+      }
+      if (Array.isArray(slide.items)) {
+        if (slide.items.length > GRID_MAX_ITEMS) {
+          issues.push({
+            where,
+            message: `A "grid" slide holds at most ${GRID_MAX_ITEMS} items; split it in two.`,
+          });
+        }
+        slide.items.forEach((item, position) => {
+          if (!item || typeof item.title !== 'string' || !item.title.trim()) {
+            issues.push({ where: `${where}.items[${position}]`, message: 'A grid item needs a `title`.' });
+          }
+        });
+      }
     }
 
     if (slide.type === 'title' && slide.visual && !hasDeckComponent(slide.visual)) {

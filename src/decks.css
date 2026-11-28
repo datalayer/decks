@@ -1024,6 +1024,129 @@ html.reveal-print .dla-deck {
   font-weight: 650;
 }
 
+/* --- Grid ------------------------------------------------------------------------ */
+
+.dla-deck .dla-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--dla-grid-columns, 4), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 18px;
+  width: 100%;
+}
+
+.dla-deck .dla-grid-item,
+.dla-deck .dla-grid-link {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dla-deck .dla-grid-item {
+  overflow: hidden;
+  padding: 20px 20px;
+  border: 1px solid var(--dla-deck-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--dla-deck-surface) 90%, transparent);
+  color: var(--dla-deck-foreground);
+  text-align: left;
+}
+
+.dla-deck .dla-grid-link {
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dla-deck .dla-grid-item:has(.dla-grid-link:hover) {
+  border-color: var(--dla-deck-accent);
+}
+
+.dla-deck .dla-grid-item--current {
+  border-color: var(--dla-deck-accent);
+  background: var(--dla-deck-accent-soft);
+  box-shadow: inset 0 4px 0 var(--dla-deck-accent);
+}
+
+.dla-deck .dla-grid-icon {
+  align-self: flex-start;
+  min-width: 30px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--dla-deck-accent);
+  color: var(--dla-deck-accent-contrast);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-align: center;
+}
+
+.dla-deck .dla-grid-kicker {
+  color: var(--dla-deck-accent);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.dla-deck .dla-grid-title {
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.dla-deck .dla-grid-body {
+  color: var(--dla-deck-muted);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+/* Two rows or more: ten cells in two rows of five still fit a 16:9 slide. */
+.dla-deck .dla-grid--dense {
+  gap: 12px;
+}
+
+.dla-deck .dla-grid--dense .dla-grid-item {
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+.dla-deck .dla-grid--dense .dla-grid-icon {
+  min-width: 26px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.dla-deck .dla-grid--dense .dla-grid-kicker {
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+
+.dla-deck .dla-grid--dense .dla-grid-title {
+  font-size: 18px;
+}
+
+.dla-deck .dla-grid--dense .dla-grid-body {
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+
+.dla-deck .dla-grid-footnote {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--dla-deck-muted);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 /* --- Flow ------------------------------------------------------------------------ */
 
 .dla-deck .dla-flow {

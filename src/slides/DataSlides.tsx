@@ -13,6 +13,7 @@ import type {
   ComparisonSlideSpec,
   FeatureShowcaseSlideSpec,
   FlowSlideSpec,
+  GridSlideSpec,
   MetricsSlideSpec,
   SlideComponentProps,
   TimelineSlideSpec,
@@ -122,6 +123,80 @@ export const FlowSlide = ({
     </ol>
   </SlideFrame>
 );
+
+/** The most cells across a grid slide, and the most cells on one. */
+export const GRID_MAX_COLUMNS = 6;
+export const GRID_MAX_ITEMS = 12;
+
+/** How many cells across: the spec's, or as many as fit the items in up to five. */
+export const gridColumnsOf = (slide: GridSlideSpec): number => {
+  if (slide.columns) {
+    return Math.min(Math.max(1, Math.round(slide.columns)), GRID_MAX_COLUMNS);
+  }
+  const count = slide.items.length;
+  return count <= 5 ? Math.max(1, count) : Math.ceil(count / Math.ceil(count / 5));
+};
+
+/**
+ * Many things of one kind, as equal cells in rows. The rows share the slide's
+ * height, so ten cells in two rows of five fit; a slide with two rows or more
+ * sets its words smaller (`dla-grid--dense`), and a cell never spills.
+ */
+export const GridSlide = ({
+  slide,
+  theme,
+  footer,
+  index,
+  total,
+}: SlideComponentProps<GridSlideSpec>): JSX.Element => {
+  const columns = gridColumnsOf(slide);
+  const rows = Math.ceil(slide.items.length / columns);
+  return (
+    <SlideFrame
+      theme={theme}
+      footer={footer}
+      index={index}
+      total={total}
+      title={slide.title}
+      backdrop={slide.backdrop}
+      subtitle={slide.subtitle}
+      layout={slide.layout}
+      variant="grid"
+    >
+      <ul
+        className={`dla-grid${rows > 1 ? ' dla-grid--dense' : ''}`}
+        style={{ '--dla-grid-columns': columns, '--dla-grid-rows': rows } as never}
+      >
+        {slide.items.map((item, position) => {
+          const key = `${position}-${item.title}`;
+          const body = (
+            <>
+              {item.icon && <span className="dla-grid-icon">{item.icon}</span>}
+              {item.kicker && <span className="dla-grid-kicker">{inline(item.kicker)}</span>}
+              <span className="dla-grid-title">{inline(item.title)}</span>
+              {item.body && <span className="dla-grid-body">{inline(item.body)}</span>}
+            </>
+          );
+          const className = `dla-grid-item${item.current ? ' dla-grid-item--current' : ''}`;
+          return stepped(
+            <li key={key} className={className}>
+              {item.href ? (
+                <a className="dla-grid-link" href={item.href}>
+                  {body}
+                </a>
+              ) : (
+                body
+              )}
+            </li>,
+            slide.fragments,
+            key,
+          );
+        })}
+      </ul>
+      {slide.footnote && <p className="dla-grid-footnote">{inline(slide.footnote)}</p>}
+    </SlideFrame>
+  );
+};
 
 /** The numbers, big enough to read from the back of the room. */
 export const MetricsSlide = ({

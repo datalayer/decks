@@ -32,6 +32,7 @@ export const SLIDE_TYPES: readonly string[] = [
   'comparison',
   'flow',
   'feature-showcase',
+  'grid',
   'timeline',
   'chart',
   'logos',

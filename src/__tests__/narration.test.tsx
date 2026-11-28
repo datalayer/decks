@@ -51,6 +51,7 @@ const EVERY_TYPE_HAS_NOTES: { [T in SlideSpec['type']]: NotesOn<T> } = {
   timeline: true,
   flow: true,
   'feature-showcase': true,
+  grid: true,
   chart: true,
   logos: true,
   code: true,
